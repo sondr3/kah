@@ -8,3 +8,4 @@ edition = '2018'
 
 [dependencies]
 structopt = "0.2"
+reqwest = "0.8"
