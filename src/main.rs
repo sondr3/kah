@@ -10,7 +10,11 @@ enum Opt {
         id: String,
         #[structopt(help = "Problem Name")]
         name: String,
-        #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
+        #[structopt(
+            short = "u",
+            long = "url",
+            default_value = "https://open.kattis.com"
+        )]
         url: String,
     },
     #[structopt(name = "test")]
@@ -33,16 +37,16 @@ enum Language {
 struct LanguageInfo {
     name: Language,
     extension: String,
-    command: String
+    command: String,
 }
 
-fn kattis_file_path(assignment: String) -> String {
-    String::from(format!("problems/{}/file/statement/samples.zip", assignment))
+fn kattis_file_path(id: String) -> String {
+    String::from(format!("problems/{}/file/statement/samples.zip", id))
 }
 
-fn get_kattis_sample(url: String, assignment: String) {
-    let path = format!("{}/{}", url, &kattis_file_path(assignment));
-    let mut res = reqwest::get(&path).expect("Whoops");
+fn get_kattis_sample(url: String, id: String) {
+    let path: String = format!("{}/{}", url, &kattis_file_path(id));
+    let res = reqwest::get(&path).expect("Whoops");
 
     println!("{}", path);
     println!("Status: {}", res.status());
@@ -57,14 +61,21 @@ fn main() {
     let java = LanguageInfo {
         name: Language::Java,
         extension: "java".to_string(),
-        command: "java".to_string()
+        command: "java".to_string(),
     };
 
     let opt = Opt::from_args();
 
     match opt {
-        Opt::Get{id: _, name: _, url: _} => get_kattis_sample("https://open.kattis.com".to_string(), "trik".to_string()),
-        Opt::Test{file: _, language: _} => test_kattis(),
+        Opt::Get {
+            id: _,
+            name: _,
+            url: _,
+        } => get_kattis_sample("https://open.kattis.com".to_string(), "trik".to_string()),
+        Opt::Test {
+            file: _,
+            language: _,
+        } => test_kattis(),
     }
 
     println!("{:?}", opt);
