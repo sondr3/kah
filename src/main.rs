@@ -7,8 +7,10 @@ use std::io::{Write, Read};
 #[structopt(name = "kattis-rs", about = "a simple Kattis helper utility")]
 struct Opt {
     #[structopt(short = "v", long = "verbose")]
+    /// Verbose messages
     verbose: bool,
     #[structopt(short = "f", long = "force")]
+    /// Overwrite existing files
     force: bool,
     #[structopt(subcommand)]
     cmd: Cmd,
@@ -28,14 +30,18 @@ enum Cmd {
             long = "url",
             default_value = "https://open.kattis.com"
         )]
+        /// URL to fetch files from
         url: String,
     },
+
     #[structopt(name = "test")]
     /// Test a Kattis assignment
     Test {
         #[structopt(help = "Kattis assignment to run")]
+        /// Which assignment to run tests for
         file: String,
-        #[structopt(short = "l", long = "language", help = "Override language")]
+        #[structopt(short = "l", long = "language")]
+        /// Select language for problem
         language: Option<String>,
     },
 }
@@ -75,7 +81,7 @@ fn get_kattis_sample(url: String, id: String) -> Result<(), Box<std::error::Erro
     println!("Status: {}", response.status());
     println!("Headers:\n{:?}", response.headers());
 
-    let file_path_str: String = file_path.into_os_string().into_string().unwrap();
+    let file_path_str = format!("{}", file_path.display());
 
     file.write(&mut buffer)?;
     copy(file_path_str, "samples.zip")?;
