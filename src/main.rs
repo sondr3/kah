@@ -65,7 +65,7 @@ fn kattis_file_path(id: String) -> String {
     String::from(format!("problems/{}/file/statement/samples.zip", id))
 }
 
-fn get_kattis_sample(url: String, id: String) -> Result<(), Box<std::error::Error>> {
+fn get_kattis_sample(url: String, id: String) -> Result<(), Box<dyn std::error::Error>> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
@@ -89,7 +89,7 @@ fn get_kattis_sample(url: String, id: String) -> Result<(), Box<std::error::Erro
     Ok(())
 }
 
-fn unzip(file_name: PathBuf) -> Result<(), Box<std::error::Error>> {
+fn unzip(file_name: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let fname = std::path::Path::new(&file_name);
     let file = File::open(&fname)?;
 
@@ -121,13 +121,13 @@ fn unzip(file_name: PathBuf) -> Result<(), Box<std::error::Error>> {
     Ok(())
 }
 
-fn test_kattis() -> Result<(), Box<std::error::Error>> {
+fn test_kattis() -> Result<(), Box<dyn std::error::Error>> {
     println!("YOU ARE TESTING ME");
     Ok(())
 }
 
-fn main() -> Result<(), Box<std::error::Error>> {
-    let java = LanguageInfo {
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let _java = LanguageInfo {
         name: Language::Java,
         extension: "java".to_string(),
         command: "java".to_string(),
