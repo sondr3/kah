@@ -1,7 +1,9 @@
 use structopt::StructOpt;
 use tempfile::tempdir;
-use std::fs::{File, copy};
+use std::fs::{File, create_dir_all, remove_file};
 use std::io::{Write, Read};
+use std::io;
+use std::path::PathBuf;
 
 #[derive(StructOpt, PartialEq, Debug)]
 #[structopt(name = "kattis-rs", about = "a simple Kattis helper utility")]
@@ -81,11 +83,36 @@ fn get_kattis_sample(url: String, id: String) -> Result<(), Box<std::error::Erro
     println!("Status: {}", response.status());
     println!("Headers:\n{:?}", response.headers());
 
-    let file_path_str = format!("{}", file_path.display());
-
     file.write(&mut buffer)?;
-    copy(file_path_str, "samples.zip")?;
+    unzip(file_path)?;
     dir.close()?;
+    Ok(())
+}
+
+fn unzip(file_name: PathBuf) -> Result<(), Box<std::error::Error>> {
+    let fname = std::path::Path::new(&file_name);
+    let file = File::open(&fname)?;
+
+    println!("{:?}", fname);
+    println!("{:?}", file);
+
+    let mut archive = zip::ZipArchive::new(file)?;
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i)?;
+        let outpath = file.sanitized_name();
+
+        println!("File {} extracted to \"{}\" ({} bytes)", i, outpath.as_path().display(), file.size());
+        if let Some(p) = outpath.parent() {
+            if !p.exists() {
+                create_dir_all(&p).unwrap();
+            }
+        }
+        let mut outfile = File::create(&outpath)?;
+        io::copy(&mut file, &mut outfile)?;
+    }
+
+    remove_file(fname)?;
     Ok(())
 }
 
