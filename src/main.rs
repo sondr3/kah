@@ -1,6 +1,6 @@
 use structopt::StructOpt;
 use tempfile::tempdir;
-use std::fs::File;
+use std::fs::{File, copy};
 use std::io::{Write, Read};
 
 #[derive(StructOpt, PartialEq, Debug)]
@@ -8,6 +8,8 @@ use std::io::{Write, Read};
 struct Opt {
     #[structopt(short = "v", long = "verbose")]
     verbose: bool,
+    #[structopt(short = "f", long = "force")]
+    force: bool,
     #[structopt(subcommand)]
     cmd: Cmd,
 }
@@ -62,7 +64,7 @@ fn get_kattis_sample(url: String, id: String) -> Result<(), Box<std::error::Erro
     println!("{:?}", dir);
     println!("{:?}", file_path);
 
-    let mut file = File::create(file_path)?;
+    let mut file = File::create(&file_path)?;
     let mut buffer = Vec::new();
 
     let path: String = format!("{}/{}", url, &kattis_file_path(id));
@@ -73,7 +75,10 @@ fn get_kattis_sample(url: String, id: String) -> Result<(), Box<std::error::Erro
     println!("Status: {}", response.status());
     println!("Headers:\n{:?}", response.headers());
 
+    let file_path_str: String = file_path.into_os_string().into_string().unwrap();
+
     file.write(&mut buffer)?;
+    copy(file_path_str, "samples.zip")?;
     dir.close()?;
     Ok(())
 }
