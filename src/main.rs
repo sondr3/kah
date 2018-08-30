@@ -3,9 +3,17 @@ use tempfile::tempdir;
 use std::fs::File;
 use std::io::{Write, Read};
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, PartialEq, Debug)]
 #[structopt(name = "kattis-rs", about = "a simple Kattis helper utility")]
-enum Opt {
+struct Opt {
+    #[structopt(short = "v", long = "verbose")]
+    verbose: bool,
+    #[structopt(subcommand)]
+    cmd: Cmd,
+}
+
+#[derive(StructOpt, PartialEq, Debug)]
+enum Cmd {
     #[structopt(name = "get")]
     /// Get sample test files from Kattis
     Get {
@@ -82,20 +90,20 @@ fn main() -> Result<(), Box<std::error::Error>> {
         command: "java".to_string(),
     };
 
-    let opt = Opt::from_args();
+    let matches = Opt::from_args();
 
-    match opt {
-        Opt::Get {
+    match matches.cmd {
+        Cmd::Get {
             id: _,
             name: _,
             url: _,
         } => get_kattis_sample("https://open.kattis.com".to_string(), "trik".to_string())?,
-        Opt::Test {
+        Cmd::Test {
             file: _,
             language: _,
         } => test_kattis()?,
     }
 
-    println!("{:?}", opt);
+    println!("{:?}", matches);
     Ok(())
 }
