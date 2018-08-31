@@ -1,7 +1,7 @@
 use std::fs::{create_dir_all, remove_file, File};
 use std::io;
 use std::io::{Read, Write};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tempfile::tempdir;
 
@@ -65,7 +65,16 @@ fn kattis_file_path(id: &str) -> String {
     format!("problems/{}/file/statement/samples.zip", id)
 }
 
-fn get_kattis_sample(url: &str, id: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn kattis_samples_output(name: &str) -> String {
+    format!("samples/{}/", name)
+}
+
+fn create_kattis_folders(name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    create_dir_all(kattis_samples_output(name))?;
+    Ok(())
+}
+
+fn get_kattis_sample(url: &str, id: &str, name: &str) -> Result<(), Box<dyn std::error::Error>> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
@@ -83,15 +92,18 @@ fn get_kattis_sample(url: &str, id: &str) -> Result<(), Box<dyn std::error::Erro
     println!("Status: {}", response.status());
     println!("Headers:\n{:?}", response.headers());
 
+    create_kattis_folders(name)?;
     file.write_all(&buffer)?;
-    unzip(&file_path)?;
+    unzip(&file_path, &name)?;
     dir.close()?;
     Ok(())
 }
 
-fn unzip(file_name: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
-    let fname = std::path::Path::new(&file_name);
-    let file = File::open(&fname)?;
+fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let fname: &Path = Path::new(&file_name);
+    let file: File = File::open(&fname)?;
+    let path = kattis_samples_output(name);
+    let dir: &Path = Path::new(&path);
 
     println!("{:?}", fname);
     println!("{:?}", file);
@@ -100,20 +112,21 @@ fn unzip(file_name: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
-        let outpath = file.sanitized_name();
+        let out_path = dir.join(file.sanitized_name());
 
         println!(
             "File {} extracted to \"{}\" ({} bytes)",
             i,
-            outpath.as_path().display(),
+            out_path.as_path().display(),
             file.size()
         );
-        if let Some(p) = outpath.parent() {
+        if let Some(p) = out_path.parent() {
             if !p.exists() {
                 create_dir_all(&p).unwrap();
             }
         }
-        let mut outfile = File::create(&outpath)?;
+
+        let mut outfile = File::create(&out_path)?;
         io::copy(&mut file, &mut outfile)?;
     }
 
@@ -142,7 +155,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let matches = Opt::from_args();
 
     match matches.cmd {
-        Cmd::Get { .. } => get_kattis_sample("https://open.kattis.com", "trik")?,
+        Cmd::Get { .. } => get_kattis_sample("https://open.kattis.com", "trik", "Trik")?,
         Cmd::Test { .. } => test_kattis()?,
     }
 
