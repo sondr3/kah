@@ -61,11 +61,11 @@ struct LanguageInfo {
     command: String,
 }
 
-fn kattis_file_path(id: String) -> String {
-    String::from(format!("problems/{}/file/statement/samples.zip", id))
+fn kattis_file_path(id: &str) -> String {
+    format!("problems/{}/file/statement/samples.zip", id)
 }
 
-fn get_kattis_sample(url: String, id: String) -> Result<(), Box<dyn std::error::Error>> {
+fn get_kattis_sample(url: &str, id: &str) -> Result<(), Box<dyn std::error::Error>> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
@@ -83,13 +83,13 @@ fn get_kattis_sample(url: String, id: String) -> Result<(), Box<dyn std::error::
     println!("Status: {}", response.status());
     println!("Headers:\n{:?}", response.headers());
 
-    file.write(&mut buffer)?;
-    unzip(file_path)?;
+    file.write_all(&buffer)?;
+    unzip(&file_path)?;
     dir.close()?;
     Ok(())
 }
 
-fn unzip(file_name: PathBuf) -> Result<(), Box<dyn std::error::Error>> {
+fn unzip(file_name: &PathBuf) -> Result<(), Box<dyn std::error::Error>> {
     let fname = std::path::Path::new(&file_name);
     let file = File::open(&fname)?;
 
@@ -133,18 +133,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         command: "java".to_string(),
     };
 
+    let _python = LanguageInfo {
+        name: Language::Python,
+        extension: ".py".to_string(),
+        command: "python".to_string(),
+    };
+
     let matches = Opt::from_args();
 
     match matches.cmd {
-        Cmd::Get {
-            id: _,
-            name: _,
-            url: _,
-        } => get_kattis_sample("https://open.kattis.com".to_string(), "trik".to_string())?,
-        Cmd::Test {
-            file: _,
-            language: _,
-        } => test_kattis()?,
+        Cmd::Get { .. } => get_kattis_sample("https://open.kattis.com", "trik")?,
+        Cmd::Test { .. } => test_kattis()?,
     }
 
     println!("{:?}", matches);
