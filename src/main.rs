@@ -1,4 +1,5 @@
 extern crate reqwest;
+#[macro_use]
 extern crate structopt;
 extern crate tempfile;
 extern crate zip;
@@ -29,7 +30,7 @@ enum Cmd {
     /// Get sample test files from Kattis
     Get {
         #[structopt(help = "Problem ID")]
-        id: String,
+        pid: String,
         #[structopt(help = "Problem Name")]
         name: String,
         #[structopt(
@@ -93,9 +94,6 @@ fn get_kattis_sample(url: &str, id: &str, name: &str) -> Result<(), Box<Error>> 
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
-    println!("{:?}", dir);
-    println!("{:?}", file_path);
-
     let mut file = File::create(&file_path)?;
     let mut buffer = Vec::new();
 
@@ -105,7 +103,6 @@ fn get_kattis_sample(url: &str, id: &str, name: &str) -> Result<(), Box<Error>> 
 
     println!("{}", path);
     println!("Status: {}", response.status());
-    println!("Headers:\n{:?}", response.headers());
 
     create_kattis_folders(name)?;
     file.write_all(&buffer)?;
@@ -120,9 +117,6 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn std::error::Erro
     let path = kattis_samples_output(name);
     let dir: &Path = Path::new(&path);
 
-    println!("{:?}", fname);
-    println!("{:?}", file);
-
     let mut archive = zip::ZipArchive::new(file)?;
 
     for i in 0..archive.len() {
@@ -131,7 +125,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn std::error::Erro
 
         println!(
             "File {} extracted to \"{}\" ({} bytes)",
-            i,
+            i + 1,
             out_path.as_path().display(),
             file.size()
         );
@@ -167,13 +161,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         command: "python".to_string(),
     };
 
-    let matches = Opt::from_args();
-
-    match matches.cmd {
-        Cmd::Get { .. } => get_kattis_sample("https://open.kattis.com", "trik", "Trik")?,
+    match Opt::from_args().cmd {
+        Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
     }
 
-    println!("{:?}", matches);
     Ok(())
 }
