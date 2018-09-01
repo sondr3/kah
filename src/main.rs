@@ -1,3 +1,8 @@
+extern crate structopt;
+extern crate tempfile;
+extern crate reqwest;
+extern crate zip;
+
 use std::fs::{create_dir_all, remove_file, File};
 use std::io;
 use std::io::{Read, Write};
