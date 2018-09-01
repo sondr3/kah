@@ -1,11 +1,11 @@
+extern crate reqwest;
 extern crate structopt;
 extern crate tempfile;
-extern crate reqwest;
 extern crate zip;
 
+use std::error::Error;
 use std::fs::{create_dir_all, remove_file, File};
-use std::io;
-use std::io::{Read, Write};
+use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use structopt::StructOpt;
 use tempfile::tempdir;
@@ -74,12 +74,22 @@ fn kattis_samples_output(name: &str) -> String {
     format!("samples/{}/", name)
 }
 
-fn create_kattis_folders(name: &str) -> Result<(), Box<dyn std::error::Error>> {
-    create_dir_all(kattis_samples_output(name))?;
-    Ok(())
+fn create_kattis_folders(name: &str) -> Result<(), Box<Error>> {
+    let path = Path::new(name).exists();
+
+    match path {
+        true => {
+            create_dir_all(kattis_samples_output(name))?;
+            Ok(())
+        }
+        false => {
+            eprintln!("The sample files for {} already exists", name);
+            Err(From::from("Exiting..."))
+        }
+    }
 }
 
-fn get_kattis_sample(url: &str, id: &str, name: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn get_kattis_sample(url: &str, id: &str, name: &str) -> Result<(), Box<Error>> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
@@ -132,7 +142,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn std::error::Erro
         }
 
         let mut outfile = File::create(&out_path)?;
-        io::copy(&mut file, &mut outfile)?;
+        copy(&mut file, &mut outfile)?;
     }
 
     remove_file(fname)?;
