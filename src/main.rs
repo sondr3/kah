@@ -57,6 +57,14 @@ enum Cmd {
         /// Select language for problem
         language: Option<String>,
     },
+
+    #[structopt(name = "user")]
+    /// Fetch user configuration file
+    User {
+        #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
+        /// URL to fetch files from
+        url: String,
+    },
 }
 
 #[derive(Debug)]
@@ -167,6 +175,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
+        Cmd::User { .. } => println!("Fetching user information..."),
     }
 
     Ok(())
