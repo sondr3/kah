@@ -39,10 +39,19 @@ enum Cmd {
     },
 
     #[structopt(name = "test")]
-    /// Test a Kattis assignment
+    /// Run tests for a Kattis problem locally
     Test {
-        #[structopt(help = "Kattis assignment to run")]
-        /// Which assignment to run tests for
+        #[structopt(help = "Kattis problem to test")]
+        file: String,
+        #[structopt(short = "l", long = "language")]
+        /// Select language for problem
+        language: Option<String>,
+    },
+
+    #[structopt(name = "submit")]
+    /// Submit your solution to a Kattis problem
+    Submit {
+        #[structopt(help = "Kattis problem to submit")]
         file: String,
         #[structopt(short = "l", long = "language")]
         /// Select language for problem
@@ -160,6 +169,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     match Opt::from_args().cmd {
         Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
+        Cmd::Submit { .. } => println!("You are submitting something!"),
     }
 
     Ok(())
