@@ -83,15 +83,12 @@ fn kattis_samples_output(name: &str) -> String {
 fn create_kattis_folders(name: &str) -> Result<(), Box<Error>> {
     let path = Path::new(&kattis_samples_output(name)).exists();
 
-    match path {
-        false => {
-            create_dir_all(kattis_samples_output(name))?;
-            Ok(())
-        }
-        true => {
-            eprintln!("The sample files for {} already exists", name);
-            Err(From::from("Exiting..."))
-        }
+    if path {
+        eprintln!("The sample files for {} already exists", name);
+        Err(From::from("Exiting..."))
+    } else {
+        create_dir_all(kattis_samples_output(name))?;
+        Ok(())
     }
 }
 
