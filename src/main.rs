@@ -3,69 +3,15 @@ extern crate reqwest;
 extern crate structopt;
 extern crate tempfile;
 extern crate zip;
+extern crate kattis_rs;
 
 use std::error::Error;
 use std::fs::{create_dir_all, remove_file, File};
 use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
-use structopt::StructOpt;
 use tempfile::tempdir;
-
-#[derive(StructOpt, PartialEq, Debug)]
-#[structopt(name = "kattis-rs", about = "a simple Kattis helper utility")]
-struct Opt {
-    #[structopt(short = "v", long = "verbose")]
-    /// Verbose messages
-    verbose: bool,
-    #[structopt(short = "f", long = "force")]
-    /// Overwrite existing files
-    force: bool,
-    #[structopt(subcommand)]
-    cmd: Cmd,
-}
-
-#[derive(StructOpt, PartialEq, Debug)]
-enum Cmd {
-    #[structopt(name = "get")]
-    /// Get sample test files from Kattis
-    Get {
-        #[structopt(help = "Problem ID")]
-        pid: String,
-        #[structopt(help = "Problem Name")]
-        name: String,
-        #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
-        /// URL to fetch files from
-        url: String,
-    },
-
-    #[structopt(name = "test")]
-    /// Run tests for a Kattis problem locally
-    Test {
-        #[structopt(help = "Kattis problem to test")]
-        file: String,
-        #[structopt(short = "l", long = "language")]
-        /// Select language for problem
-        language: Option<String>,
-    },
-
-    #[structopt(name = "submit")]
-    /// Submit your solution to a Kattis problem
-    Submit {
-        #[structopt(help = "Kattis problem to submit")]
-        file: String,
-        #[structopt(short = "l", long = "language")]
-        /// Select language for problem
-        language: Option<String>,
-    },
-
-    #[structopt(name = "init")]
-    /// Fetch user configuration file
-    Init {
-        #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
-        /// URL to fetch files from
-        url: String,
-    },
-}
+use kattis_rs::cli;
+use kattis_rs::cli::Cmd;
 
 #[derive(Debug)]
 enum Language {
@@ -171,7 +117,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         command: "python".to_string(),
     };
 
-    match Opt::from_args().cmd {
+    match cli::parse().cmd {
         Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
