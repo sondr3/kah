@@ -6,3 +6,5 @@ extern crate reqwest;
 
 pub mod cli;
 pub mod get;
+pub mod languages;
+pub mod test;
