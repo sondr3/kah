@@ -58,9 +58,9 @@ enum Cmd {
         language: Option<String>,
     },
 
-    #[structopt(name = "user")]
+    #[structopt(name = "init")]
     /// Fetch user configuration file
-    User {
+    Init {
         #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
         /// URL to fetch files from
         url: String,
@@ -175,7 +175,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
-        Cmd::User { .. } => println!("Fetching user information..."),
+        Cmd::Init { .. } => println!("Fetching user information..."),
     }
 
     Ok(())
