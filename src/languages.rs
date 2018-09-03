@@ -26,4 +26,3 @@ pub fn python() -> LanguageInfo {
         command: "python".to_string(),
     }
 }
-

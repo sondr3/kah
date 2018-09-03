@@ -1,9 +1,9 @@
+use reqwest;
 use std::error::Error;
 use std::fs::{create_dir_all, remove_file, File};
 use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
-use reqwest;
 use zip;
 
 fn kattis_file_path(id: &str) -> String {
