@@ -1,17 +1,17 @@
 extern crate reqwest;
 #[macro_use]
 extern crate structopt;
+extern crate kattis_rs;
 extern crate tempfile;
 extern crate zip;
-extern crate kattis_rs;
 
+use kattis_rs::cli;
+use kattis_rs::cli::Cmd;
 use std::error::Error;
 use std::fs::{create_dir_all, remove_file, File};
 use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
-use kattis_rs::cli;
-use kattis_rs::cli::Cmd;
 
 #[derive(Debug)]
 enum Language {

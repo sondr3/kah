@@ -1,10 +1,12 @@
-use structopt::StructOpt;
 use structopt::clap::AppSettings;
+use structopt::StructOpt;
 
 #[derive(StructOpt, PartialEq, Debug)]
-#[structopt(name = "kattis-rs",
-            about = "a simple Kattis helper utility",
-            raw(global_settings = "&[AppSettings::ColoredHelp]"))]
+#[structopt(
+    name = "kattis-rs",
+    about = "a simple Kattis helper utility",
+    raw(global_settings = "&[AppSettings::ColoredHelp]")
+)]
 pub struct Opt {
     #[structopt(short = "v", long = "verbose")]
     /// Verbose messages
