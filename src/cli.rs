@@ -55,9 +55,9 @@ pub enum Cmd {
     #[structopt(name = "init")]
     /// Fetch user configuration file
     Init {
-        #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
+        #[structopt(default_value = ".kattisrc")]
         /// URL to fetch files from
-        url: String,
+        file: String,
     },
 }
 
