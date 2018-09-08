@@ -2,7 +2,7 @@ use ini::Ini;
 use kah::Kah;
 use serde_json;
 use std::error::Error;
-use std::fs::File;
+use std::fs::{remove_file, File};
 use std::io::Write;
 use std::path::Path;
 use url::Url;
@@ -12,6 +12,11 @@ pub struct User {
     pub username: String,
     pub token: String,
     pub kattis: String,
+}
+
+fn remove_kattisrc(path: String) -> Result<(), Box<Error>> {
+    remove_file(path)?;
+    Ok(())
 }
 
 fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<Error>> {
@@ -33,7 +38,7 @@ fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<Er
 }
 
 pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<Error>> {
-    let kattisrc = Ini::load_from_file(path).unwrap();
+    let kattisrc = Ini::load_from_file(&path).unwrap();
 
     let user_section = kattisrc.section(Some("user")).unwrap();
     let kattis_section = kattisrc.section(Some("kattis")).unwrap();
@@ -51,6 +56,7 @@ pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<Error>> {
     let kah = Kah { user };
 
     create_kah_dotfile(".kah", &kah, force)?;
+    remove_kattisrc(path)?;
 
     Ok(())
 }

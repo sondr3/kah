@@ -57,7 +57,12 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<Error>> {
         copy(&mut file, &mut outfile)?;
     }
 
-    println!("Wrote {} sample files for {} to {:#?}", archive.len(), name, dir);
+    println!(
+        "Wrote {} sample files for {} to {:#?}",
+        archive.len(),
+        name,
+        dir
+    );
     remove_file(fname)?;
     Ok(())
 }
