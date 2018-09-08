@@ -1,12 +1,12 @@
-extern crate kattis_rs;
+extern crate kah;
 
 use std::error::Error;
 
-use kattis_rs::cli;
-use kattis_rs::cli::Cmd;
-use kattis_rs::get::get_kattis_sample;
-use kattis_rs::init::parse_kattisrc;
-use kattis_rs::test::test_kattis;
+use kah::cli;
+use kah::cli::Cmd;
+use kah::get::get_kattis_sample;
+use kah::init::parse_kattisrc;
+use kah::test::test_kattis;
 
 fn main() -> Result<(), Box<Error>> {
     match cli::parse().cmd {

@@ -3,7 +3,7 @@ use structopt::StructOpt;
 
 #[derive(StructOpt, PartialEq, Debug)]
 #[structopt(
-    name = "kattis-rs",
+    name = "kah",
     about = "a simple Kattis helper utility",
     raw(global_settings = "&[AppSettings::ColoredHelp]")
 )]
