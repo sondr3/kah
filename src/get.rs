@@ -47,12 +47,6 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<Error>> {
         let mut file = archive.by_index(i)?;
         let out_path = dir.join(file.sanitized_name());
 
-        println!(
-            "File {} extracted to \"{}\" ({} bytes)",
-            i + 1,
-            out_path.as_path().display(),
-            file.size()
-        );
         if let Some(p) = out_path.parent() {
             if !p.exists() {
                 create_dir_all(&p).unwrap();
@@ -63,6 +57,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<Error>> {
         copy(&mut file, &mut outfile)?;
     }
 
+    println!("Wrote {} sample files for {} to {:#?}", archive.len(), name, dir);
     remove_file(fname)?;
     Ok(())
 }
@@ -76,7 +71,7 @@ pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<Error>> {
 
     let url = get_kattis_url();
 
-    let path: String = format!("{}/{}", url, &kattis_file_path(id));
+    let path: String = format!("{}{}", url, &kattis_file_path(id));
     let mut response = reqwest::get(&path)?;
     response.read_to_end(&mut buffer)?;
 
