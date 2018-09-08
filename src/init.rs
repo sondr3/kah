@@ -1,11 +1,11 @@
 use ini::Ini;
-use std::error::Error;
-use url::Url;
+use kah::Kah;
 use serde_json;
-use std::path::Path;
+use std::error::Error;
 use std::fs::File;
 use std::io::Write;
-use kah::Kah;
+use std::path::Path;
+use url::Url;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
@@ -14,7 +14,7 @@ pub struct User {
     pub kattis: String,
 }
 
-fn create_kah_dotfile(name: &str, input: Kah, force: bool) -> Result<(), Box<Error>> {
+fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<Error>> {
     let path = Path::new(&name);
     let mut file;
     if path.exists() && !force {
@@ -26,7 +26,7 @@ fn create_kah_dotfile(name: &str, input: Kah, force: bool) -> Result<(), Box<Err
         let json = serde_json::to_string_pretty(&input)?;
         let buffer = json.into_bytes();
 
-        file.write(&buffer)?;
+        file.write_all(&buffer)?;
 
         Ok(())
     }
@@ -48,11 +48,9 @@ pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<Error>> {
         kattis: url.to_string(),
     };
 
-    let kah = Kah {
-        user,
-    };
+    let kah = Kah { user };
 
-    create_kah_dotfile(".kah", kah, force)?;
+    create_kah_dotfile(".kah", &kah, force)?;
 
     Ok(())
 }

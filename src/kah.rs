@@ -4,4 +4,3 @@ use init::User;
 pub struct Kah {
     pub user: User,
 }
-
