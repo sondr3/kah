@@ -10,7 +10,7 @@ use kah::test::test_kattis;
 
 fn main() -> Result<(), Box<Error>> {
     match cli::parse().cmd {
-        Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
+        Cmd::Get { pid, name } => get_kattis_sample(&pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Init { file, force } => parse_kattisrc(file, force)?,

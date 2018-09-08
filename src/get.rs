@@ -5,6 +5,8 @@ use std::io::{copy, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 use zip;
+use serde_json;
+use kah::Kah;
 
 fn kattis_file_path(id: &str) -> String {
     format!("problems/{}/file/statement/samples.zip", id)
@@ -12,6 +14,13 @@ fn kattis_file_path(id: &str) -> String {
 
 fn kattis_samples_output(name: &str) -> String {
     format!("samples/{}/", name)
+}
+
+fn get_kattis_url() -> String {
+    let file = File::open(".kah").expect("Could not find .kah");
+    let json: Kah = serde_json::from_reader(file).expect("Could not read .kah");
+
+    json.user.kattis
 }
 
 fn create_kattis_folders(name: &str) -> Result<(), Box<Error>> {
@@ -58,12 +67,14 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<Error>> {
     Ok(())
 }
 
-pub fn get_kattis_sample(url: &str, id: &str, name: &str) -> Result<(), Box<Error>> {
+pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<Error>> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
     let mut file = File::create(&file_path)?;
     let mut buffer = Vec::new();
+
+    let url = get_kattis_url();
 
     let path: String = format!("{}/{}", url, &kattis_file_path(id));
     let mut response = reqwest::get(&path)?;

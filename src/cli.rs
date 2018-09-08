@@ -27,9 +27,6 @@ pub enum Cmd {
         pid: String,
         #[structopt(help = "Problem Name")]
         name: String,
-        #[structopt(short = "u", long = "url", default_value = "https://open.kattis.com")]
-        /// URL to fetch files from
-        url: String,
     },
 
     #[structopt(name = "test")]

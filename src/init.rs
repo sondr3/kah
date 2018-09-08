@@ -5,17 +5,13 @@ use serde_json;
 use std::path::Path;
 use std::fs::File;
 use std::io::Write;
+use kah::Kah;
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Kah {
-    user: User,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-struct User {
-    username: String,
-    token: String,
-    kattis: String,
+pub struct User {
+    pub username: String,
+    pub token: String,
+    pub kattis: String,
 }
 
 fn create_kah_dotfile(name: &str, input: Kah, force: bool) -> Result<(), Box<Error>> {
