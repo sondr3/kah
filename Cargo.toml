@@ -2,6 +2,7 @@
 name = "kattis-rs"
 version = "0.1.0"
 authors = ["Sondre Nilsen <nilsen.sondre@gmail.com>"]
+license = "GPL-3.0-or-later"
 
 [[bin]]
 name = "kah"
