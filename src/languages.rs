@@ -1,28 +1,34 @@
 #[derive(Debug)]
-pub enum Language {
+pub enum Languages {
     Python,
     Java,
+    Haskell,
+    None,
+}
+
+fn get_language(name: &str) -> Languages {
+    match name {
+        "Python" => Languages::Python,
+        "Java" => Languages::Java,
+        "Haskell" => Languages::Haskell,
+        _ => Languages::None,
+    }
 }
 
 #[derive(Debug)]
-pub struct LanguageInfo {
-    name: Language,
+pub struct Language {
+    name: Languages,
     extension: String,
     command: String,
 }
 
-pub fn java() -> LanguageInfo {
-    LanguageInfo {
-        name: Language::Java,
-        extension: "java".to_string(),
-        command: "java".to_string(),
-    }
-}
-
-pub fn python() -> LanguageInfo {
-    LanguageInfo {
-        name: Language::Python,
-        extension: ".py".to_string(),
-        command: "python".to_string(),
+impl Language {
+    fn new(name: &str, extension: String, command: String) -> Language {
+        let language = get_language(&name);
+        Language {
+            name: language,
+            extension,
+            command,
+        }
     }
 }
