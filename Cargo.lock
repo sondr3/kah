@@ -302,7 +302,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
 name = "kattis-rs"
-version = "0.1.0"
+version = "0.2.0"
 dependencies = [
  "reqwest 0.8.8 (registry+https://github.com/rust-lang/crates.io-index)",
  "rust-ini 0.12.2 (registry+https://github.com/rust-lang/crates.io-index)",

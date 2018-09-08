@@ -1,8 +1,16 @@
 [package]
 name = "kattis-rs"
-version = "0.1.0"
+version = "0.2.0"
 authors = ["Sondre Nilsen <nilsen.sondre@gmail.com>"]
+homepage = "https://github.com/sondr3/kah"
+description = "A small helper for Kattis assignments"
+repository = "https://github.com/sondr3/kah"
+documentation = "https://github.com/sondr3/kah"
+readme = "README.md"
 license = "GPL-3.0-or-later"
+
+[badges]
+travis-ci = { repository = "sondr3/kah" }
 
 [[bin]]
 name = "kah"
