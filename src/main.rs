@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<Error>> {
         Cmd::Get { pid, name, url } => get_kattis_sample(&url, &pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
-        Cmd::Init { file } => parse_kattisrc(file)?,
+        Cmd::Init { file, force } => parse_kattisrc(file, force)?,
     }
 
     Ok(())

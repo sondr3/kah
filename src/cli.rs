@@ -58,6 +58,9 @@ pub enum Cmd {
         #[structopt(default_value = ".kattisrc")]
         /// URL to fetch files from
         file: String,
+        #[structopt(short = "f", long = "force")]
+        /// Overwrite existing files
+        force: bool,
     },
 }
 

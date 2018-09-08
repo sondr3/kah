@@ -1,6 +1,15 @@
 use ini::Ini;
 use std::error::Error;
 use url::Url;
+use serde_json;
+use std::path::Path;
+use std::fs::File;
+use std::io::Write;
+
+#[derive(Debug, Serialize, Deserialize)]
+struct Kah {
+    user: User,
+}
 
 #[derive(Debug, Serialize, Deserialize)]
 struct User {
@@ -9,7 +18,25 @@ struct User {
     kattis: String,
 }
 
-pub fn parse_kattisrc(path: String) -> Result<(), Box<Error>> {
+fn create_kah_dotfile(name: &str, input: Kah, force: bool) -> Result<(), Box<Error>> {
+    let path = Path::new(&name);
+    let mut file;
+    if path.exists() && !force {
+        eprintln!("The dotfile for kah already exists");
+        Err(From::from("Exiting..."))
+    } else {
+        file = File::create(path)?;
+
+        let json = serde_json::to_string_pretty(&input)?;
+        let buffer = json.into_bytes();
+
+        file.write(&buffer)?;
+
+        Ok(())
+    }
+}
+
+pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<Error>> {
     let kattisrc = Ini::load_from_file(path).unwrap();
 
     let user_section = kattisrc.section(Some("user")).unwrap();
@@ -25,7 +52,11 @@ pub fn parse_kattisrc(path: String) -> Result<(), Box<Error>> {
         kattis: url.to_string(),
     };
 
-    println!("{:?}", user);
+    let kah = Kah {
+        user,
+    };
+
+    create_kah_dotfile(".kah", kah, force)?;
 
     Ok(())
 }
