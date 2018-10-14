@@ -1,3 +1,5 @@
+#![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
+#![forbid(unsafe_code)]
 #[macro_use]
 extern crate structopt;
 extern crate ini;

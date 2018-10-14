@@ -3,11 +3,14 @@ name = "kah"
 version = "0.2.0"
 authors = ["Sondre Nilsen <nilsen.sondre@gmail.com>"]
 homepage = "https://github.com/sondr3/kah"
-description = "A small helper for Kattis assignments"
+description = "A small helper for kattis assignments"
 repository = "https://github.com/sondr3/kah"
 documentation = "https://github.com/sondr3/kah"
 readme = "README.md"
 license = "GPL-3.0-or-later"
+
+[features]
+fail-on-warnings = []
 
 [badges]
 travis-ci = { repository = "sondr3/kah" }
