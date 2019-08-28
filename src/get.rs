@@ -1,4 +1,4 @@
-use kah::Kah;
+use crate::kah::Kah;
 use reqwest;
 use serde_json;
 use std::error::Error;
@@ -23,7 +23,7 @@ fn get_kattis_url() -> String {
     json.user.kattis
 }
 
-fn create_kattis_folders(name: &str) -> Result<(), Box<Error>> {
+fn create_kattis_folders(name: &str) -> Result<(), Box<dyn Error>> {
     let path = Path::new(&kattis_samples_output(name)).exists();
 
     if path {
@@ -35,7 +35,7 @@ fn create_kattis_folders(name: &str) -> Result<(), Box<Error>> {
     }
 }
 
-fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<Error>> {
+fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn Error>> {
     let fname: &Path = Path::new(&file_name);
     let file: File = File::open(&fname)?;
     let path = kattis_samples_output(name);
@@ -67,7 +67,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<Error>> {
     Ok(())
 }
 
-pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<Error>> {
+pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<dyn Error>> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 

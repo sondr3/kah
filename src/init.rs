@@ -1,5 +1,5 @@
 use ini::Ini;
-use kah::Kah;
+use crate::kah::Kah;
 use serde_json;
 use std::error::Error;
 use std::fs::{remove_file, File};
@@ -14,12 +14,12 @@ pub struct User {
     pub kattis: String,
 }
 
-fn remove_kattisrc(path: String) -> Result<(), Box<Error>> {
+fn remove_kattisrc(path: String) -> Result<(), Box<dyn Error>> {
     remove_file(path)?;
     Ok(())
 }
 
-fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<Error>> {
+fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<dyn Error>> {
     let path = Path::new(&name);
     let mut file;
     if path.exists() && !force {
@@ -37,7 +37,7 @@ fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<Er
     }
 }
 
-pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<Error>> {
+pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<dyn Error>> {
     let kattisrc = Ini::load_from_file(&path).unwrap();
 
     let user_section = kattisrc.section(Some("user")).unwrap();

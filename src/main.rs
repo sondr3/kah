@@ -8,7 +8,7 @@ use kah::get::get_kattis_sample;
 use kah::init::parse_kattisrc;
 use kah::test::test_kattis;
 
-fn main() -> Result<(), Box<Error>> {
+fn main() -> Result<(), Box<dyn Error>> {
     match cli::parse().cmd {
         Cmd::Get { pid, name } => get_kattis_sample(&pid, &name)?,
         Cmd::Test { .. } => test_kattis()?,

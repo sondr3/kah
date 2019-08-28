@@ -8,6 +8,7 @@ repository = "https://github.com/sondr3/kah"
 documentation = "https://github.com/sondr3/kah"
 readme = "README.md"
 license = "GPL-3.0-or-later"
+edition = "2018"
 
 [features]
 fail-on-warnings = []
