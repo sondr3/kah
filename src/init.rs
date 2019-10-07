@@ -40,6 +40,7 @@ pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<dyn Error>> {
 
     let submit = kattis_section.get("submissionurl").unwrap();
     let hostname = kattis_section.get("hostname").unwrap();
+    let hostname = format!("{}{}", "https://", hostname);
 
     let user = Config {
         username: user_section.get("username").unwrap().parse()?,
