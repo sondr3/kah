@@ -20,7 +20,7 @@ fn get_kattis_url() -> String {
     let file = File::open(".kah").expect("Could not find .kah");
     let json: Kah = serde_json::from_reader(file).expect("Could not read .kah");
 
-    json.user.hostname
+    json.kattis.hostname
 }
 
 fn create_kattis_folders(name: &str) -> Result<(), Box<dyn Error>> {

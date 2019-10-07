@@ -1,7 +1,7 @@
-use crate::init::Config;
+use crate::kattis::Kattis;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Kah {
-    pub user: Config,
+    pub kattis: Kattis,
 }
