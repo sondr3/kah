@@ -2,21 +2,16 @@ use crate::kah::Kah;
 use ini::Ini;
 use serde::{Deserialize, Serialize};
 use std::error::Error;
-use std::fs::{remove_file, File};
+use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use url::Url;
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct User {
+pub struct Config {
     pub username: String,
     pub token: String,
-    pub kattis: String,
-}
-
-fn remove_kattisrc(path: String) -> Result<(), Box<dyn Error>> {
-    remove_file(path)?;
-    Ok(())
+    pub hostname: String,
+    pub submit: String,
 }
 
 fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<dyn Error>> {
@@ -38,25 +33,24 @@ fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<dy
 }
 
 pub fn parse_kattisrc(path: String, force: bool) -> Result<(), Box<dyn Error>> {
-    let kattisrc = Ini::load_from_file(&path).unwrap();
+    let kattis_rc = Ini::load_from_file(&path).unwrap();
 
-    let user_section = kattisrc.section(Some("user")).unwrap();
-    let kattis_section = kattisrc.section(Some("kattis")).unwrap();
+    let user_section = kattis_rc.section(Some("user")).unwrap();
+    let kattis_section = kattis_rc.section(Some("kattis")).unwrap();
 
-    let kattis_url = kattis_section.get("loginurl").unwrap();
-    let mut url = Url::parse(kattis_url)?;
-    url.path_segments_mut().map_err(|_| "cannot be base")?.pop();
+    let submit = kattis_section.get("submissionurl").unwrap();
+    let hostname = kattis_section.get("hostname").unwrap();
 
-    let user = User {
+    let user = Config {
         username: user_section.get("username").unwrap().parse()?,
         token: user_section.get("token").unwrap().parse()?,
-        kattis: url.to_string(),
+        hostname: hostname.to_owned(),
+        submit: submit.to_owned(),
     };
 
     let kah = Kah { user };
 
     create_kah_dotfile(".kah", &kah, force)?;
-    remove_kattisrc(path)?;
 
     Ok(())
 }
