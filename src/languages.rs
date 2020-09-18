@@ -38,7 +38,7 @@ pub enum Language {
 }
 
 impl Language {
-    pub(crate) async fn create_problem(&self, name: String) -> Result<()> {
+    pub(crate) async fn create_problem(&self, name: String, force: bool) -> Result<()> {
         let code = self.initial_problem_content();
         let path = format!(
             "{}/{}.{}",
@@ -52,7 +52,7 @@ impl Language {
         }
 
         let path = Path::new(&path);
-        if path.exists() {
+        if path.exists() && !force {
             eprintln!("{} already exists for language {}", name, self.to_string())
         } else {
             let mut file = File::create(path).await?;

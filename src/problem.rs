@@ -8,12 +8,13 @@ use select::{
     document::Document,
     predicate::{Class, Name, Predicate},
 };
+use serde::{Deserialize, Serialize};
 use std::{path::Path, process::exit};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncWriteExt};
 
-#[derive(Debug)]
-pub struct Problem {
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ProblemMetadata {
     pub(crate) name: String,
     pub(crate) id: String,
     pub(crate) cpu_time_limit: String,
@@ -21,9 +22,9 @@ pub struct Problem {
     pub(crate) difficulty: f32,
 }
 
-impl Problem {
-    pub async fn new(id: &str, force: bool) -> Result<Problem> {
-        let problem = Problem::get(id).await?;
+impl ProblemMetadata {
+    pub async fn new(id: &str, force: bool) -> Result<ProblemMetadata> {
+        let problem = ProblemMetadata::get(id).await?;
 
         println!("Found problem {}, fetching samples", problem.name);
         problem.get_sample_files(force).await?;
@@ -31,7 +32,7 @@ impl Problem {
         Ok(problem)
     }
 
-    pub async fn get(id: &str) -> Result<Problem> {
+    pub async fn get(id: &str) -> Result<ProblemMetadata> {
         let url = Kattis::get_kattis_url();
         let path: String = format!("{}/problems/{}", url, id);
         let response = reqwest::get(&path).await?;
@@ -76,7 +77,7 @@ impl Problem {
             .text()
             .parse()?;
 
-        Ok(Problem {
+        Ok(ProblemMetadata {
             id: id.into(),
             name: name.trim().to_string(),
             cpu_time_limit: cpu_time_limit.trim().to_string(),

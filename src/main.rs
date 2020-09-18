@@ -1,3 +1,4 @@
+mod datafile;
 mod error;
 mod init;
 mod kattis;
@@ -6,10 +7,11 @@ mod problem;
 mod test;
 mod utils;
 
+use crate::datafile::Datafile;
 use crate::init::create_kah_dotfile;
 use crate::kattis::Kattis;
 use crate::languages::Language;
-use crate::problem::Problem;
+use crate::problem::ProblemMetadata;
 use crate::test::test_kattis;
 use anyhow::Result;
 use dialoguer::theme::ColorfulTheme;
@@ -89,7 +91,8 @@ async fn main() -> Result<()> {
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Init { file, force } => {
             let kattis = Kattis::new(file);
-            create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah")
+            create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah");
+            Datafile::create(force).await?;
         }
     }
 
@@ -104,10 +107,11 @@ async fn create_problem(problem_id: &str, force: bool) -> Result<()> {
         .interact()?;
 
     let language = Language::from_str(languages[language])?;
+    let problem = ProblemMetadata::new(problem_id, force).await?;
+    let mut datafile = Datafile::get_datafile().await?;
 
-    let problem = Problem::new(problem_id, force).await?;
-
-    language.create_problem(problem.name).await?;
+    datafile.add_problem(&problem, &language, force).await?;
+    language.create_problem(problem.name, force).await?;
 
     Ok(())
 }

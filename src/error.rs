@@ -1,3 +1,4 @@
+use std::path::PathBuf;
 use thiserror::Error;
 
 #[derive(Debug, Error, PartialEq)]
@@ -8,4 +9,6 @@ pub enum KahError {
     FetchError(String, String),
     #[error("No language {0} matches predefined languages")]
     LanguageParseError(String),
+    #[error("No such file: {0}")]
+    FileDoesNotExist(PathBuf),
 }
