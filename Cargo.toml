@@ -15,7 +15,8 @@ travis-ci = { repository = "sondr3/kah" }
 
 [dependencies]
 structopt = "0.3.2"
-ureq = { version = "1.4.1", features = ["json"] }
+reqwest = { version = "0.10", features = ["json"] }
+tokio = { version = "0.2", features = ["full"] }
 zip = "0.5.3"
 tempfile = "3.1.0"
 rust-ini = "0.15.3"

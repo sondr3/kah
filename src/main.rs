@@ -71,11 +71,12 @@ pub enum Cmd {
     },
 }
 
-fn main() -> Result<()> {
+#[tokio::main]
+async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     match opt.cmd {
-        Cmd::Get { pid, name } => get_kattis_sample(&pid, &name)?,
+        Cmd::Get { pid, name } => get_kattis_sample(&pid, &name).await?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Init { file } => {

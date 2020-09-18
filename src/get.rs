@@ -1,7 +1,7 @@
 use crate::{error::KahError::FileExists, kattis::Kattis};
 use anyhow::Result;
 use std::fs::{create_dir_all, remove_file, File};
-use std::io::{copy, BufReader, Read, Write};
+use std::io::{copy, BufReader, Write};
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 
@@ -64,25 +64,22 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<()> {
     Ok(())
 }
 
-pub fn get_kattis_sample(id: &str, name: &str) -> Result<()> {
+pub async fn get_kattis_sample(id: &str, name: &str) -> Result<()> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
     let mut file = File::create(&file_path)?;
-    let mut buffer = Vec::new();
 
     let url = get_kattis_url();
 
     let path: String = format!("{}/{}", url, &kattis_file_path(id));
-    let response = ureq::get(&path).call();
+    let response = reqwest::get(&path).await?;
 
     println!("{}", path);
     println!("Status: {}", response.status());
 
-    response.into_reader().read_to_end(&mut buffer)?;
-
     create_kattis_folders(name)?;
-    file.write_all(&buffer)?;
+    file.write_all(&response.bytes().await?)?;
     unzip(&file_path, &name)?;
     dir.close()?;
     Ok(())
