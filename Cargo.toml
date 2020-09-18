@@ -10,15 +10,8 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 edition = "2018"
 
-[features]
-fail-on-warnings = []
-
 [badges]
 travis-ci = { repository = "sondr3/kah" }
-
-[[bin]]
-name = "kah"
-path = "src/main.rs"
 
 [dependencies]
 structopt = "0.3.2"

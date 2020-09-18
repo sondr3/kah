@@ -1,8 +1,16 @@
+mod error;
+mod get;
+mod init;
+mod kattis;
+mod languages;
+mod problem;
+mod test;
+
+use crate::get::get_kattis_sample;
+use crate::init::create_kah_dotfile;
+use crate::kattis::Kattis;
+use crate::test::test_kattis;
 use anyhow::Result;
-use kah::get::get_kattis_sample;
-use kah::init::create_kah_dotfile;
-use kah::kattis::Kattis;
-use kah::test::test_kattis;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
