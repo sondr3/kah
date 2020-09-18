@@ -1,5 +1,7 @@
 use ini::Ini;
 use serde::{Deserialize, Serialize};
+use std::fs::File;
+use std::io::BufReader;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Kattis {
@@ -33,5 +35,13 @@ impl Kattis {
             hostname,
             submit: submit.to_owned(),
         }
+    }
+
+    pub(crate) fn get_kattis_url() -> String {
+        let file = File::open(".kah").expect("Could not find .kah");
+        let reader = BufReader::new(file);
+        let json: Kattis = serde_json::from_reader(reader).expect("Could not read .kah");
+
+        json.hostname
     }
 }

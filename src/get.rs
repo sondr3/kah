@@ -1,8 +1,9 @@
-use crate::{error::KahError::FileExists, kattis::Kattis};
+use crate::{kattis::Kattis, problem::Problem};
 use anyhow::Result;
 use std::fs::{create_dir_all, remove_file, File};
-use std::io::{copy, BufReader, Write};
+use std::io::{copy, Write};
 use std::path::{Path, PathBuf};
+use std::process::exit;
 use tempfile::tempdir;
 
 fn kattis_file_path(id: &str) -> String {
@@ -13,19 +14,13 @@ fn kattis_samples_output(name: &str) -> String {
     format!("samples/{}/", name)
 }
 
-fn get_kattis_url() -> String {
-    let file = File::open(".kah").expect("Could not find .kah");
-    let reader = BufReader::new(file);
-    let json: Kattis = serde_json::from_reader(reader).expect("Could not read .kah");
-
-    json.hostname
-}
-
 fn create_kattis_folders(name: &str) -> Result<()> {
     let path = Path::new(&kattis_samples_output(name)).exists();
 
+    // TODO: Add force flag to function
     if path {
-        Err(FileExists(name.to_string()).into())
+        println!("Samples already exist, skipping...");
+        exit(0);
     } else {
         create_dir_all(kattis_samples_output(name))?;
         Ok(())
@@ -65,12 +60,13 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<()> {
 }
 
 pub async fn get_kattis_sample(id: &str, name: &str) -> Result<()> {
+    Problem::get_details(id).await?;
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 
     let mut file = File::create(&file_path)?;
 
-    let url = get_kattis_url();
+    let url = Kattis::get_kattis_url();
 
     let path: String = format!("{}/{}", url, &kattis_file_path(id));
     let response = reqwest::get(&path).await?;
