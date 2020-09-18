@@ -39,17 +39,17 @@ pub struct Opt {
 
 #[derive(StructOpt, PartialEq, Debug)]
 pub enum Cmd {
-    #[structopt(name = "get")]
+    #[structopt(name = "problem", alias = "p")]
     /// Get sample test files from Kattis
-    Get {
+    Problem {
         /// Problem ID
-        pid: String,
+        id: String,
         #[structopt(short, long)]
         /// Force creation of sample files
         force: bool,
     },
 
-    #[structopt(name = "test")]
+    #[structopt(name = "test", alias = "t")]
     /// Run tests for a Kattis problem locally
     Test {
         /// Kattis problem to test
@@ -59,7 +59,7 @@ pub enum Cmd {
         language: Option<String>,
     },
 
-    #[structopt(name = "submit")]
+    #[structopt(name = "submit", alias = "s")]
     /// Submit your solution to a Kattis problem
     Submit {
         /// Kattis problem to submit
@@ -69,7 +69,7 @@ pub enum Cmd {
         language: Option<String>,
     },
 
-    #[structopt(name = "init")]
+    #[structopt(name = "init", alias = "i")]
     /// Fetch user configuration file
     Init {
         #[structopt(default_value = ".kattisrc")]
@@ -86,7 +86,7 @@ async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     match opt.cmd {
-        Cmd::Get { pid, force } => create_problem(&pid, force).await?,
+        Cmd::Problem { id, force } => create_problem(&id, force).await?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Init { file, force } => {
