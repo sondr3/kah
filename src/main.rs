@@ -68,6 +68,9 @@ pub enum Cmd {
         #[structopt(default_value = ".kattisrc")]
         /// URL to fetch files from
         file: String,
+        #[structopt(short, long)]
+        /// Force creation of config file
+        force: bool,
     },
 }
 
@@ -79,9 +82,9 @@ async fn main() -> Result<()> {
         Cmd::Get { pid, name } => get_kattis_sample(&pid, &name).await?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
-        Cmd::Init { file } => {
+        Cmd::Init { file, force } => {
             let kattis = Kattis::new(file);
-            create_kah_dotfile(".kah", &kattis, false).expect("Could not initialize kah")
+            create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah")
         }
     }
 

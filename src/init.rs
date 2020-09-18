@@ -18,6 +18,8 @@ pub fn create_kah_dotfile(name: &str, input: &Kattis, force: bool) -> Result<(),
 
         file.write_all(&buffer)?;
 
+        println!("Successfully created configuration file");
+
         Ok(())
     }
 }
