@@ -1,5 +1,6 @@
 #![forbid(unsafe_code)]
-pub mod cli;
+
+pub mod error;
 pub mod get;
 pub mod init;
 pub mod kattis;

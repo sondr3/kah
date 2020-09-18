@@ -1,11 +1,9 @@
-use serde_json;
-use std::error::Error;
+use crate::{error::KahError::FileExists, kattis::Kattis};
+use anyhow::Result;
 use std::fs::{create_dir_all, remove_file, File};
-use std::io::{copy, Read, Write, BufReader};
+use std::io::{copy, BufReader, Read, Write};
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
-use zip;
-use crate::kattis::Kattis;
 
 fn kattis_file_path(id: &str) -> String {
     format!("problems/{}/file/statement/samples.zip", id)
@@ -23,19 +21,18 @@ fn get_kattis_url() -> String {
     json.hostname
 }
 
-fn create_kattis_folders(name: &str) -> Result<(), Box<dyn Error>> {
+fn create_kattis_folders(name: &str) -> Result<()> {
     let path = Path::new(&kattis_samples_output(name)).exists();
 
     if path {
-        eprintln!("The sample files for {} already exists", name);
-        Err(From::from("Exiting..."))
+        Err(FileExists(name.to_string()).into())
     } else {
         create_dir_all(kattis_samples_output(name))?;
         Ok(())
     }
 }
 
-fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn Error>> {
+fn unzip(file_name: &PathBuf, name: &str) -> Result<()> {
     let fname: &Path = Path::new(&file_name);
     let file: File = File::open(&fname)?;
     let path = kattis_samples_output(name);
@@ -67,7 +64,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<dyn Error>> {
+pub fn get_kattis_sample(id: &str, name: &str) -> Result<()> {
     let dir = tempdir()?;
     let file_path = dir.path().join("samples.zip");
 

@@ -1,6 +1,6 @@
-use std::error::Error;
+use anyhow::Result;
 
-pub fn test_kattis() -> Result<(), Box<dyn Error>> {
+pub fn test_kattis() -> Result<()> {
     println!("YOU ARE TESTING ME");
     Ok(())
 }

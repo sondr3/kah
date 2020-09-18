@@ -1,8 +1,8 @@
+use crate::kattis::Kattis;
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
-use crate::kattis::Kattis;
 
 pub fn create_kah_dotfile(name: &str, input: &Kattis, force: bool) -> Result<(), Box<dyn Error>> {
     let path = Path::new(&name);

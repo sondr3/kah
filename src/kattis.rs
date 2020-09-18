@@ -30,7 +30,7 @@ impl Kattis {
         Kattis {
             username: username.into(),
             token: token.into(),
-            hostname: hostname.to_owned(),
+            hostname,
             submit: submit.to_owned(),
         }
     }
