@@ -1,4 +1,3 @@
-#![cfg_attr(feature = "fail-on-warnings", deny(warnings))]
 #![forbid(unsafe_code)]
 pub mod cli;
 pub mod get;
