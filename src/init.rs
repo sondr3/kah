@@ -1,10 +1,10 @@
-use crate::kah::Kah;
 use std::error::Error;
 use std::fs::File;
 use std::io::Write;
 use std::path::Path;
+use crate::kattis::Kattis;
 
-fn create_kah_dotfile(name: &str, input: &Kah, force: bool) -> Result<(), Box<dyn Error>> {
+pub fn create_kah_dotfile(name: &str, input: &Kattis, force: bool) -> Result<(), Box<dyn Error>> {
     let path = Path::new(&name);
     let mut file;
     if path.exists() && !force {

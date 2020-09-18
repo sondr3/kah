@@ -2,7 +2,6 @@
 pub mod cli;
 pub mod get;
 pub mod init;
-pub mod kah;
 pub mod kattis;
 pub mod languages;
 pub mod problem;

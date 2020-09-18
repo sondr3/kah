@@ -1,11 +1,11 @@
-use crate::kah::Kah;
 use serde_json;
 use std::error::Error;
 use std::fs::{create_dir_all, remove_file, File};
-use std::io::{copy, Read, Write};
+use std::io::{copy, Read, Write, BufReader};
 use std::path::{Path, PathBuf};
 use tempfile::tempdir;
 use zip;
+use crate::kattis::Kattis;
 
 fn kattis_file_path(id: &str) -> String {
     format!("problems/{}/file/statement/samples.zip", id)
@@ -17,9 +17,10 @@ fn kattis_samples_output(name: &str) -> String {
 
 fn get_kattis_url() -> String {
     let file = File::open(".kah").expect("Could not find .kah");
-    let json: Kah = serde_json::from_reader(file).expect("Could not read .kah");
+    let reader = BufReader::new(file);
+    let json: Kattis = serde_json::from_reader(reader).expect("Could not read .kah");
 
-    json.kattis.hostname
+    json.hostname
 }
 
 fn create_kattis_folders(name: &str) -> Result<(), Box<dyn Error>> {
@@ -44,8 +45,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn Error>> {
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
-        #[allow(deprecated)]
-        let out_path = dir.join(file.sanitized_name());
+        let out_path = dir.join(file.name());
 
         if let Some(p) = out_path.parent() {
             if !p.exists() {
@@ -76,7 +76,7 @@ pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<dyn Error>> {
 
     let url = get_kattis_url();
 
-    let path: String = format!("{}{}", url, &kattis_file_path(id));
+    let path: String = format!("{}/{}", url, &kattis_file_path(id));
     let response = ureq::get(&path).call();
 
     println!("{}", path);
