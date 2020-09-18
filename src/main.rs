@@ -1,14 +1,14 @@
 mod error;
-mod get;
 mod init;
 mod kattis;
 mod languages;
 mod problem;
 mod test;
+mod utils;
 
-use crate::get::get_kattis_sample;
 use crate::init::create_kah_dotfile;
 use crate::kattis::Kattis;
+use crate::problem::Problem;
 use crate::test::test_kattis;
 use anyhow::Result;
 use structopt::clap::AppSettings;
@@ -16,9 +16,9 @@ use structopt::StructOpt;
 
 #[derive(StructOpt, PartialEq, Debug)]
 #[structopt(
-name = "kah",
-about = "a simple Kattis helper utility",
-global_settings(& [AppSettings::ColoredHelp])
+    name = "kah",
+    about = "a simple Kattis helper utility",
+    global_settings(& [AppSettings::ColoredHelp])
 )]
 pub struct Opt {
     #[structopt(short, long)]
@@ -38,8 +38,9 @@ pub enum Cmd {
     Get {
         /// Problem ID
         pid: String,
-        /// Problem name
-        name: String,
+        #[structopt(short, long)]
+        /// Force creation of sample files
+        force: bool,
     },
 
     #[structopt(name = "test")]
@@ -79,7 +80,7 @@ async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     match opt.cmd {
-        Cmd::Get { pid, name } => get_kattis_sample(&pid, &name).await?,
+        Cmd::Get { pid, force } => Problem::create(&pid, force).await?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Init { file, force } => {

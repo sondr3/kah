@@ -1,20 +1,37 @@
-use crate::error::KahError::{FetchError, ScrapeError};
-use crate::kattis::Kattis;
+use crate::{
+    error::KahError::{FetchError, ScrapeError},
+    kattis::Kattis,
+    utils::*,
+};
 use anyhow::Result;
-use select::document::Document;
-use select::predicate::{Class, Name, Predicate};
+use select::{
+    document::Document,
+    predicate::{Class, Name, Predicate},
+};
+use std::{path::Path, process::exit};
+use tempfile::tempdir;
+use tokio::{fs::File, io::AsyncWriteExt};
 
 #[derive(Debug)]
 pub struct Problem {
-    name: String,
-    id: String,
-    cpu_time_limit: String,
-    memory_limit: String,
-    difficulty: f32,
+    pub(crate) name: String,
+    pub(crate) id: String,
+    pub(crate) cpu_time_limit: String,
+    pub(crate) memory_limit: String,
+    pub(crate) difficulty: f32,
 }
 
 impl Problem {
-    pub async fn get_details(id: &str) -> Result<Problem> {
+    pub async fn create(id: &str, force: bool) -> Result<()> {
+        let problem = Problem::get(id).await?;
+
+        println!("Found problem {}, fetching samples", problem.name);
+        problem.get_sample_files(force).await?;
+
+        Ok(())
+    }
+
+    pub async fn get(id: &str) -> Result<Problem> {
         let url = Kattis::get_kattis_url();
         let path: String = format!("{}/problems/{}", url, id);
         let response = reqwest::get(&path).await?;
@@ -31,7 +48,7 @@ impl Problem {
             .ok_or_else(|| ScrapeError(id.to_string(), "Could not find title".to_string()))?
             .text();
 
-        let name = Problem::clean_title(title);
+        let name = clean_title(title);
 
         let sidebar = document
             .find(Class("problem-download"))
@@ -68,10 +85,33 @@ impl Problem {
         })
     }
 
-    fn clean_title(title: String) -> String {
-        title
-            .chars()
-            .filter(|c| c.is_ascii_alphanumeric())
-            .collect()
+    pub async fn get_sample_files(&self, force: bool) -> Result<()> {
+        let temp_dir = tempdir()?;
+        let file_path = temp_dir.path().join("samples.zip");
+
+        let mut temp_file = File::create(&file_path).await?;
+
+        let url = Kattis::get_kattis_url();
+
+        let path: String = kattis_file_path(url, &self.id);
+        let response = reqwest::get(&path).await?;
+
+        self.create_sample_folder(force).await?;
+        temp_file.write_all(&response.bytes().await?).await?;
+        unzip(&file_path, &self.name).await?;
+        temp_dir.close()?;
+        Ok(())
+    }
+
+    async fn create_sample_folder(&self, force: bool) -> Result<()> {
+        let path = Path::new(&kattis_samples_output(&self.name)).exists();
+
+        if path && !force {
+            println!("Samples already exist, skipping...");
+            exit(0);
+        } else {
+            tokio::fs::create_dir_all(kattis_samples_output(&self.name)).await?;
+            Ok(())
+        }
     }
 }
