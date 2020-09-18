@@ -1,5 +1,4 @@
 use crate::kah::Kah;
-use reqwest;
 use serde_json;
 use std::error::Error;
 use std::fs::{create_dir_all, remove_file, File};
@@ -45,6 +44,7 @@ fn unzip(file_name: &PathBuf, name: &str) -> Result<(), Box<dyn Error>> {
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i)?;
+        #[allow(deprecated)]
         let out_path = dir.join(file.sanitized_name());
 
         if let Some(p) = out_path.parent() {
@@ -77,11 +77,12 @@ pub fn get_kattis_sample(id: &str, name: &str) -> Result<(), Box<dyn Error>> {
     let url = get_kattis_url();
 
     let path: String = format!("{}{}", url, &kattis_file_path(id));
-    let mut response = reqwest::get(&path)?;
-    response.read_to_end(&mut buffer)?;
+    let response = ureq::get(&path).call();
 
     println!("{}", path);
     println!("Status: {}", response.status());
+
+    response.into_reader().read_to_end(&mut buffer)?;
 
     create_kattis_folders(name)?;
     file.write_all(&buffer)?;
