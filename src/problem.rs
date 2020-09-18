@@ -22,13 +22,13 @@ pub struct Problem {
 }
 
 impl Problem {
-    pub async fn create(id: &str, force: bool) -> Result<()> {
+    pub async fn new(id: &str, force: bool) -> Result<Problem> {
         let problem = Problem::get(id).await?;
 
         println!("Found problem {}, fetching samples", problem.name);
         problem.get_sample_files(force).await?;
 
-        Ok(())
+        Ok(problem)
     }
 
     pub async fn get(id: &str) -> Result<Problem> {
@@ -85,7 +85,7 @@ impl Problem {
         })
     }
 
-    pub async fn get_sample_files(&self, force: bool) -> Result<()> {
+    async fn get_sample_files(&self, force: bool) -> Result<()> {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("samples.zip");
 

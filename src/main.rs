@@ -8,9 +8,13 @@ mod utils;
 
 use crate::init::create_kah_dotfile;
 use crate::kattis::Kattis;
+use crate::languages::Language;
 use crate::problem::Problem;
 use crate::test::test_kattis;
 use anyhow::Result;
+use dialoguer::theme::ColorfulTheme;
+use dialoguer::Select;
+use std::str::FromStr;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
 
@@ -80,7 +84,7 @@ async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     match opt.cmd {
-        Cmd::Get { pid, force } => Problem::create(&pid, force).await?,
+        Cmd::Get { pid, force } => create_problem(&pid, force).await?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Init { file, force } => {
@@ -88,6 +92,22 @@ async fn main() -> Result<()> {
             create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah")
         }
     }
+
+    Ok(())
+}
+
+async fn create_problem(problem_id: &str, force: bool) -> Result<()> {
+    let languages = &["Rust", "Kotlin", "Java", "Python", "Haskell"];
+    let language = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Select a language to solve problem in")
+        .items(&languages[..])
+        .interact()?;
+
+    let language = Language::from_str(languages[language])?;
+
+    let problem = Problem::new(problem_id, force).await?;
+
+    language.create_problem(problem.name).await?;
 
     Ok(())
 }
