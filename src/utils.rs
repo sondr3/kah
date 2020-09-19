@@ -36,13 +36,6 @@ pub(crate) async fn unzip(file_name: &PathBuf, name: &str) -> Result<()> {
     Ok(())
 }
 
-pub(crate) fn clean_title(title: String) -> String {
-    title
-        .chars()
-        .filter(|c| c.is_ascii_alphanumeric())
-        .collect()
-}
-
 pub(crate) fn sample_files_url(host: String, id: &str) -> String {
     format!("{}/problems/{}/file/statement/samples.zip", host, id)
 }

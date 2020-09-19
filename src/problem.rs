@@ -49,7 +49,7 @@ impl ProblemMetadata {
             .ok_or_else(|| ScrapeError(id.to_string(), "Could not find title".to_string()))?
             .text();
 
-        let name = clean_title(title);
+        let name = title;
 
         let sidebar = document
             .find(Class("problem-download"))
