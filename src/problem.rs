@@ -2,6 +2,7 @@ use crate::{
     error::KahError::{FetchError, ScrapeError},
     kattis::Kattis,
     utils::*,
+    ForceProblemCreation,
 };
 use anyhow::Result;
 use select::{
@@ -23,10 +24,10 @@ pub struct ProblemMetadata {
 }
 
 impl ProblemMetadata {
-    pub async fn new(id: &str, force: bool) -> Result<ProblemMetadata> {
+    pub(crate) async fn new(id: &str, force: ForceProblemCreation) -> Result<ProblemMetadata> {
         let problem = ProblemMetadata::get(id).await?;
 
-        println!("Found problem {}, fetching samples", problem.name);
+        println!("Found problem {}, fetching data", problem.name);
         problem.get_sample_files(force).await?;
 
         Ok(problem)
@@ -86,7 +87,7 @@ impl ProblemMetadata {
         })
     }
 
-    async fn get_sample_files(&self, force: bool) -> Result<()> {
+    async fn get_sample_files(&self, force: ForceProblemCreation) -> Result<()> {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("samples.zip");
 
@@ -104,10 +105,10 @@ impl ProblemMetadata {
         Ok(())
     }
 
-    async fn create_sample_folder(&self, force: bool) -> Result<()> {
+    async fn create_sample_folder(&self, force: ForceProblemCreation) -> Result<()> {
         let path = Path::new(&kattis_sample_directory(&self.name)).exists();
 
-        if path && !force {
+        if path && !force.recreate_samples() {
             println!("Samples already exist, skipping...");
             exit(0);
         } else {

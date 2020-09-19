@@ -41,5 +41,23 @@ pub(crate) fn sample_files_url(host: String, id: &str) -> String {
 }
 
 pub(crate) fn kattis_sample_directory(name: &str) -> String {
-    format!("samples/{}/", name)
+    format!("samples/{}/", clean_name(name))
+}
+
+pub(crate) fn clean_name(name: impl Into<String>) -> String {
+    name.into()
+        .chars()
+        .filter(|c| c.is_ascii_alphanumeric())
+        .collect()
+}
+
+pub(crate) trait TitleCase {
+    fn title_case(&self) -> String;
+}
+
+impl TitleCase for String {
+    fn title_case(&self) -> String {
+        let (first, rest) = self.split_at(1);
+        first.to_uppercase() + rest
+    }
 }

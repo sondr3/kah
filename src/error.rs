@@ -13,4 +13,6 @@ pub enum KahError {
     FileDoesNotExist(PathBuf),
     #[error("No such problem exists: {0}")]
     NoSuchProblem(String),
+    #[error("No such flag: {0}")]
+    ForceProblemCreationError(u64),
 }

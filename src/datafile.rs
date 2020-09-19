@@ -2,6 +2,7 @@ use crate::error::KahError::FileDoesNotExist;
 use crate::language::Language;
 use crate::problem::ProblemMetadata;
 use crate::utils::kattis_sample_directory;
+use crate::ForceProblemCreation;
 use anyhow::Result;
 use serde::export::Formatter;
 use serde::{Deserialize, Serialize};
@@ -74,9 +75,9 @@ impl Datafile {
         &mut self,
         problem: &ProblemMetadata,
         language: &Language,
-        force: bool,
+        force: ForceProblemCreation,
     ) -> Result<()> {
-        if self.problems.contains_key(&problem.id) && !force {
+        if self.problems.contains_key(&problem.id) && !force.recreate_metadata() {
             eprintln!("Problem {} already exists, aborting", problem.name);
             exit(1);
         }
@@ -94,7 +95,6 @@ impl Datafile {
             },
         );
 
-        println!("{:?}", self);
         self.write().await?;
 
         Ok(())

@@ -8,7 +8,8 @@ mod test;
 mod utils;
 
 use crate::datafile::Datafile;
-use crate::error::KahError::NoSuchProblem;
+use crate::error::KahError;
+use crate::error::KahError::{ForceProblemCreationError, NoSuchProblem};
 use crate::init::create_kah_dotfile;
 use crate::kattis::Kattis;
 use crate::language::Language;
@@ -17,6 +18,7 @@ use crate::test::test_kattis;
 use anyhow::Result;
 use dialoguer::theme::ColorfulTheme;
 use dialoguer::Select;
+use serde::export::TryFrom;
 use std::str::FromStr;
 use structopt::clap::AppSettings;
 use structopt::StructOpt;
@@ -45,9 +47,11 @@ pub enum Cmd {
     Problem {
         /// Problem ID
         id: String,
-        #[structopt(short, long)]
-        /// Force creation of sample files
-        force: bool,
+        #[structopt(short, parse(from_occurrences))]
+        /// Force creation of problem files, a single `-f` will recreate the
+        /// samples, `-ff` will recreate the .kahdata entry and `-fff` will
+        /// recreate everything including the solution
+        force: u64,
     },
 
     #[structopt(name = "test", alias = "t")]
@@ -89,12 +93,64 @@ pub enum Cmd {
     },
 }
 
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub(crate) enum ForceProblemCreation {
+    Nothing,
+    Samples,
+    SamplesMetadata,
+    SamplesMetadataSolution,
+}
+
+impl ForceProblemCreation {
+    pub(crate) fn recreate_samples(&self) -> bool {
+        match self {
+            ForceProblemCreation::Nothing => false,
+            ForceProblemCreation::Samples
+            | ForceProblemCreation::SamplesMetadata
+            | ForceProblemCreation::SamplesMetadataSolution => true,
+        }
+    }
+
+    pub(crate) fn recreate_metadata(&self) -> bool {
+        match self {
+            ForceProblemCreation::Nothing | ForceProblemCreation::Samples => false,
+            ForceProblemCreation::SamplesMetadata
+            | ForceProblemCreation::SamplesMetadataSolution => true,
+        }
+    }
+
+    pub(crate) fn recreate_solution(&self) -> bool {
+        match self {
+            ForceProblemCreation::Nothing
+            | ForceProblemCreation::Samples
+            | ForceProblemCreation::SamplesMetadata => false,
+            ForceProblemCreation::SamplesMetadataSolution => true,
+        }
+    }
+}
+
+impl TryFrom<u64> for ForceProblemCreation {
+    type Error = KahError;
+
+    fn try_from(value: u64) -> Result<Self, Self::Error> {
+        match value {
+            0 => Ok(ForceProblemCreation::Nothing),
+            1 => Ok(ForceProblemCreation::Samples),
+            2 => Ok(ForceProblemCreation::SamplesMetadata),
+            3 => Ok(ForceProblemCreation::SamplesMetadataSolution),
+            _ => Err(ForceProblemCreationError(value)),
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     match opt.cmd {
-        Cmd::Problem { id, force } => create_problem(&id, force).await?,
+        Cmd::Problem { id, force } => {
+            create_problem(&id, ForceProblemCreation::try_from(force)?).await?
+        }
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Info { problem } => {
@@ -116,7 +172,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn create_problem(problem_id: &str, force: bool) -> Result<()> {
+async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result<()> {
     let languages = &["Rust", "Kotlin", "Java", "Python", "Haskell"];
     let language = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select a language to solve problem in")

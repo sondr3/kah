@@ -1,4 +1,6 @@
 use crate::error::KahError;
+use crate::utils::{clean_name, TitleCase};
+use crate::ForceProblemCreation;
 use anyhow::Result;
 use std::path::Path;
 use std::str::FromStr;
@@ -38,12 +40,16 @@ pub enum Language {
 }
 
 impl Language {
-    pub(crate) async fn create_problem(&self, name: String, force: bool) -> Result<()> {
+    pub(crate) async fn create_problem(
+        &self,
+        name: String,
+        force: ForceProblemCreation,
+    ) -> Result<()> {
         let code = self.initial_problem_content();
         let path = format!(
             "{}/{}.{}",
             self.to_string(),
-            name,
+            clean_name(&name),
             self.configuration().extension
         );
 
@@ -52,14 +58,14 @@ impl Language {
         }
 
         let path = Path::new(&path);
-        if path.exists() && !force {
+        if path.exists() && !force.recreate_solution() {
             eprintln!("{} already exists for language {}", name, self.to_string())
         } else {
             let mut file = File::create(path).await?;
             file.write_all(code.as_bytes()).await?;
         }
 
-        println!("Created {} in {}", name, self.to_string());
+        println!("Created {} in {}", name, self.to_string().title_case());
 
         Ok(())
     }
@@ -68,7 +74,7 @@ impl Language {
         format!(
             "{}/{}.{}",
             self.to_string(),
-            name,
+            clean_name(name),
             self.configuration().extension
         )
     }
