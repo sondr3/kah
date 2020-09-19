@@ -3,6 +3,7 @@ use crate::language::Language;
 use crate::problem::ProblemMetadata;
 use crate::utils::kattis_sample_directory;
 use anyhow::Result;
+use serde::export::Formatter;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -22,6 +23,20 @@ pub struct Solution {
 pub struct Problem {
     metadata: ProblemMetadata,
     solution: Solution,
+}
+
+impl std::fmt::Display for Problem {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} ({})\nCPU: {}, MEM: {}, DIF: {}",
+            self.metadata.name,
+            self.metadata.id,
+            self.metadata.cpu_time_limit,
+            self.metadata.memory_limit,
+            self.metadata.difficulty
+        )
+    }
 }
 
 impl PartialEq for Problem {
@@ -98,6 +113,12 @@ impl Datafile {
         let datafile = serde_json::from_str(&buffer)?;
 
         Ok(datafile)
+    }
+
+    pub(crate) fn get_problem(&self, id: &str) -> Option<&Problem> {
+        self.problems
+            .values()
+            .find(|p| p.metadata.id.contains(id) || p.metadata.name.contains(id))
     }
 
     async fn write(&self) -> Result<()> {

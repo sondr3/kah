@@ -11,4 +11,6 @@ pub enum KahError {
     LanguageParseError(String),
     #[error("No such file: {0}")]
     FileDoesNotExist(PathBuf),
+    #[error("No such problem exists: {0}")]
+    NoSuchProblem(String),
 }

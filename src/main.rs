@@ -8,6 +8,7 @@ mod test;
 mod utils;
 
 use crate::datafile::Datafile;
+use crate::error::KahError::NoSuchProblem;
 use crate::init::create_kah_dotfile;
 use crate::kattis::Kattis;
 use crate::language::Language;
@@ -69,7 +70,14 @@ pub enum Cmd {
         language: Option<String>,
     },
 
-    #[structopt(name = "init", alias = "i")]
+    #[structopt(name = "info", alias = "i")]
+    /// Show information about a problem and its solution
+    Info {
+        /// Problem ID
+        problem: String,
+    },
+
+    #[structopt(name = "init")]
     /// Fetch user configuration file
     Init {
         #[structopt(default_value = ".kattisrc")]
@@ -89,6 +97,15 @@ async fn main() -> Result<()> {
         Cmd::Problem { id, force } => create_problem(&id, force).await?,
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
+        Cmd::Info { problem } => {
+            let datafile = Datafile::get_datafile().await?;
+            let problem = match datafile.get_problem(&problem) {
+                Some(problem) => problem,
+                None => return Err(NoSuchProblem(problem).into()),
+            };
+
+            println!("{}", problem);
+        }
         Cmd::Init { file, force } => {
             let kattis = Kattis::new(file);
             create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah");
