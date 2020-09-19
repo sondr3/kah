@@ -61,13 +61,13 @@ impl Datafile {
         language: &Language,
         force: bool,
     ) -> Result<()> {
-        if self.problems.contains_key(&problem.name) && !force {
+        if self.problems.contains_key(&problem.id) && !force {
             eprintln!("Problem {} already exists, aborting", problem.name);
             exit(1);
         }
 
         self.problems.insert(
-            problem.name.clone(),
+            problem.id.clone(),
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
