@@ -1,6 +1,7 @@
 use crate::error::KahError::FileDoesNotExist;
-use crate::languages::Language;
+use crate::language::Language;
 use crate::problem::ProblemMetadata;
+use crate::utils::kattis_sample_directory;
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -43,7 +44,7 @@ impl Datafile {
             exit(0);
         } else {
             let mut file = File::create(path).await?;
-            let json = serde_json::to_string::<Datafile>(&Datafile {
+            let json = serde_json::to_string_pretty::<Datafile>(&Datafile {
                 problems: HashMap::new(),
             })?;
             file.write_all(&json.into_bytes()).await?;
@@ -70,8 +71,8 @@ impl Datafile {
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
-                    solution: Default::default(),
-                    samples: Default::default(),
+                    solution: PathBuf::from(language.problem_path(&problem.name)),
+                    samples: PathBuf::from(kattis_sample_directory(&problem.name)),
                     language: language.to_string(),
                     solved: false,
                 },
@@ -101,7 +102,7 @@ impl Datafile {
 
     async fn write(&self) -> Result<()> {
         let path = Path::new(".kahdata");
-        let json = serde_json::to_string(self)?;
+        let json = serde_json::to_string_pretty(self)?;
         let mut file = OpenOptions::new()
             .write(true)
             .append(false)
