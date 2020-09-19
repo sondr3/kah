@@ -94,7 +94,7 @@ impl ProblemMetadata {
 
         let url = Kattis::get_kattis_url();
 
-        let path: String = kattis_file_path(url, &self.id);
+        let path: String = sample_files_url(url, &self.id);
         let response = reqwest::get(&path).await?;
 
         self.create_sample_folder(force).await?;
@@ -105,13 +105,13 @@ impl ProblemMetadata {
     }
 
     async fn create_sample_folder(&self, force: bool) -> Result<()> {
-        let path = Path::new(&kattis_samples_output(&self.name)).exists();
+        let path = Path::new(&kattis_sample_directory(&self.name)).exists();
 
         if path && !force {
             println!("Samples already exist, skipping...");
             exit(0);
         } else {
-            tokio::fs::create_dir_all(kattis_samples_output(&self.name)).await?;
+            tokio::fs::create_dir_all(kattis_sample_directory(&self.name)).await?;
             Ok(())
         }
     }

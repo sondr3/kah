@@ -64,6 +64,15 @@ impl Language {
         Ok(())
     }
 
+    pub(crate) fn problem_path(&self, name: &str) -> String {
+        format!(
+            "{}/{}.{}",
+            self.to_string(),
+            name,
+            self.configuration().extension
+        )
+    }
+
     fn initial_problem_content(&self) -> String {
         match self {
             Language::Python { .. } => PYTHON_CODE,

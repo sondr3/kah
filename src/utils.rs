@@ -6,7 +6,7 @@ use tokio::fs::File;
 pub(crate) async fn unzip(file_name: &PathBuf, name: &str) -> Result<()> {
     let fname: &Path = Path::new(&file_name);
     let file = File::open(&fname).await?.into_std().await;
-    let path = kattis_samples_output(name);
+    let path = kattis_sample_directory(name);
     let dir: &Path = Path::new(&path);
 
     let mut archive = zip::ZipArchive::new(file)?;
@@ -43,10 +43,10 @@ pub(crate) fn clean_title(title: String) -> String {
         .collect()
 }
 
-pub(crate) fn kattis_file_path(host: String, id: &str) -> String {
+pub(crate) fn sample_files_url(host: String, id: &str) -> String {
     format!("{}/problems/{}/file/statement/samples.zip", host, id)
 }
 
-pub(crate) fn kattis_samples_output(name: &str) -> String {
+pub(crate) fn kattis_sample_directory(name: &str) -> String {
     format!("samples/{}/", name)
 }
