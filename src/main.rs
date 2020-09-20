@@ -1,6 +1,6 @@
 mod datafile;
 mod error;
-mod init;
+mod kah;
 mod kattis;
 mod language;
 mod problem;
@@ -16,12 +16,11 @@ use crate::language::Language;
 use crate::problem::ProblemMetadata;
 use crate::test::test_kattis;
 use anyhow::Result;
-use dialoguer::theme::ColorfulTheme;
-use dialoguer::Select;
+use dialoguer::{theme::ColorfulTheme, Select};
 use serde::export::TryFrom;
+use std::path::PathBuf;
 use std::str::FromStr;
-use structopt::clap::AppSettings;
-use structopt::StructOpt;
+use structopt::{clap::AppSettings, StructOpt};
 
 #[derive(StructOpt, PartialEq, Debug)]
 #[structopt(
@@ -84,9 +83,9 @@ pub enum Cmd {
     #[structopt(name = "init")]
     /// Fetch user configuration file
     Init {
-        #[structopt(default_value = ".kattisrc")]
+        #[structopt(parse(from_os_str))]
         /// URL to fetch files from
-        file: String,
+        file: PathBuf,
         #[structopt(short, long)]
         /// Force creation of config file
         force: bool,
@@ -166,8 +165,7 @@ async fn main() -> Result<()> {
             println!("{}", problem);
         }
         Cmd::Init { file, force } => {
-            let kattis = Kattis::new(file);
-            create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah");
+            Kah::new(file, force).await?;
             Datafile::create(force).await?;
         }
         Cmd::Update => {

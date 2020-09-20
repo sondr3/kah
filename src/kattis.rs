@@ -2,6 +2,7 @@ use ini::Ini;
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
+use std::path::PathBuf;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Kattis {
@@ -12,7 +13,7 @@ pub struct Kattis {
 }
 
 impl Kattis {
-    pub fn new(path: String) -> Self {
+    pub fn new(path: &PathBuf) -> Self {
         let kattis_rc = Ini::load_from_file(&path).unwrap();
 
         let user_section = kattis_rc.section(Some("user")).unwrap();
