@@ -62,7 +62,7 @@ impl Kah {
     pub(crate) async fn add_problem<T: Language>(
         &mut self,
         problem: &ProblemMetadata,
-        language: T,
+        language: &T,
         force: ForceProblemCreation,
     ) -> Result<()> {
         let mut problems = self.open_datafile().await?;

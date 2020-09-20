@@ -80,7 +80,7 @@ impl Kah {
     }
 
     pub(crate) async fn create_problem<T: Language + Display>(
-        &self,
+        &mut self,
         problem: &ProblemMetadata,
         language: &T,
         force: ForceProblemCreation,
@@ -108,6 +108,8 @@ impl Kah {
         }
 
         println!("Created {} in {}", problem.name, language.to_string());
+
+        self.add_problem(problem, language, force).await?;
 
         Ok(())
     }

@@ -189,7 +189,6 @@ async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result
     let mut kah = Kah::get().await?;
 
     kah.create_problem(&problem, &language, force).await?;
-    kah.add_problem(&problem, language, force).await?;
 
     Ok(())
 }
