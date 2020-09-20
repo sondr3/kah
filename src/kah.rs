@@ -35,8 +35,8 @@ impl Kah {
         let kah = Kah {
             config: KahConfig {
                 dir: config_dir.to_path_buf(),
-                file: config_dir.join("config.json").to_path_buf(),
-                data: config_dir.join("data.json").to_path_buf(),
+                file: config_dir.join("config.json"),
+                data: config_dir.join("data.json"),
             },
             kattis: match Kah::parse_kattisrc(kattisrc_path.clone()) {
                 Some(x) => Ok(x),
