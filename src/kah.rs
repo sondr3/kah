@@ -1,4 +1,7 @@
-use crate::{error::KahError::KattisrcParseError, language::Language, ForceProblemCreation};
+use crate::{
+    error::KahError::KattisrcParseError, language::Language, problem::ProblemMetadata,
+    ForceProblemCreation,
+};
 use anyhow::Result;
 use directories::ProjectDirs;
 use ini::Ini;
@@ -7,6 +10,7 @@ use std::{
     env::current_dir,
     fmt::Display,
     path::{Path, PathBuf},
+    process::exit,
 };
 use tokio::{fs::File, io::AsyncWriteExt};
 
@@ -77,30 +81,33 @@ impl Kah {
 
     pub(crate) async fn create_problem<T: Language + Display>(
         &self,
-        name: &str,
+        problem: &ProblemMetadata,
         language: &T,
         force: ForceProblemCreation,
     ) -> Result<()> {
         let code = language.initial_problem_content();
-        let path = language.problem_path(name);
+        let path = language.problem_path(&problem);
 
-        if !Path::new(&language.to_string()).exists() {
-            tokio::fs::create_dir_all(language.to_string()).await?;
+        let language_folder = &language.language_path();
+
+        if !Path::new(language_folder).exists() {
+            tokio::fs::create_dir_all(language_folder).await?;
         }
 
         let path = Path::new(&path);
         if path.exists() && !force.recreate_solution() {
             eprintln!(
                 "{} already exists for language {}",
-                name,
+                problem.name,
                 language.to_string()
-            )
+            );
+            exit(0);
         } else {
             let mut file = File::create(path).await?;
             file.write_all(code.as_bytes()).await?;
         }
 
-        println!("Created {} in {}", name, language.to_string());
+        println!("Created {} in {}", problem.name, language.to_string());
 
         Ok(())
     }

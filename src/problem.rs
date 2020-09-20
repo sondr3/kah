@@ -15,9 +15,9 @@ use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncWriteExt};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct Sample {
-    input_path: PathBuf,
-    expected_path: PathBuf,
+pub(crate) struct Sample {
+    pub(crate) input_path: PathBuf,
+    pub(crate) expected_path: PathBuf,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -104,24 +104,24 @@ impl ProblemMetadata {
 
         let url = Kah::get().await?.get_kattis_url();
 
-        let path: String = sample_files_url(url, &self.id);
+        let path: String = self.sample_files_url(url);
         let response = reqwest::get(&path).await?;
 
         self.create_sample_folder(force).await?;
         temp_file.write_all(&response.bytes().await?).await?;
-        let files = unzip(&file_path, &self.name).await?;
+        let files = unzip(&file_path, &self).await?;
         temp_dir.close()?;
         Ok(files)
     }
 
     async fn create_sample_folder(&self, force: ForceProblemCreation) -> Result<()> {
-        let path = Path::new(&kattis_sample_directory(&self.name)).exists();
+        let path = Path::new(&self.kattis_sample_directory()).exists();
 
         if path && !force.recreate_samples() {
             println!("Samples already exist, skipping...");
             exit(0);
         } else {
-            tokio::fs::create_dir_all(kattis_sample_directory(&self.name)).await?;
+            tokio::fs::create_dir_all(&self.kattis_sample_directory()).await?;
             Ok(())
         }
     }
@@ -144,7 +144,7 @@ impl ProblemMetadata {
         println!("{:?}", outputs);
 
         let cwd = current_dir()?;
-        let path = PathBuf::from(kattis_sample_directory(&self.name));
+        let path = PathBuf::from(&self.kattis_sample_directory());
         self.samples = inputs
             .iter()
             .zip(outputs.iter())
@@ -155,5 +155,20 @@ impl ProblemMetadata {
             .collect();
 
         Ok(())
+    }
+
+    fn sample_files_url(&self, url: String) -> String {
+        format!("{}/problems/{}/file/statement/samples.zip", url, self.id)
+    }
+
+    pub(crate) fn kattis_sample_directory(&self) -> String {
+        format!("samples/{}/", self.as_os_str())
+    }
+
+    pub(crate) fn as_os_str(&self) -> String {
+        self.name
+            .chars()
+            .filter(|c| c.is_ascii_alphanumeric())
+            .collect()
     }
 }

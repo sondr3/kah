@@ -188,7 +188,7 @@ async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result
     let problem = ProblemMetadata::new(problem_id, force).await?;
     let mut kah = Kah::get().await?;
 
-    kah.create_problem(&problem.name, &language, force).await?;
+    kah.create_problem(&problem, &language, force).await?;
     kah.add_problem(&problem, language, force).await?;
 
     Ok(())
