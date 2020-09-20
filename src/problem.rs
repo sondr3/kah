@@ -1,6 +1,6 @@
 use crate::{
     error::KahError::{FetchError, ScrapeError},
-    kattis::Kattis,
+    kah::Kah,
     utils::*,
     ForceProblemCreation,
 };
@@ -10,9 +10,15 @@ use select::{
     predicate::{Class, Name, Predicate},
 };
 use serde::{Deserialize, Serialize};
-use std::{path::Path, process::exit};
+use std::{env::current_dir, path::Path, path::PathBuf, process::exit};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncWriteExt};
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct Sample {
+    input_path: PathBuf,
+    expected_path: PathBuf,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct ProblemMetadata {
@@ -21,20 +27,22 @@ pub struct ProblemMetadata {
     pub(crate) cpu_time_limit: String,
     pub(crate) memory_limit: String,
     pub(crate) difficulty: f32,
+    pub(crate) samples: Vec<Sample>,
 }
 
 impl ProblemMetadata {
     pub(crate) async fn new(id: &str, force: ForceProblemCreation) -> Result<ProblemMetadata> {
-        let problem = ProblemMetadata::get(id).await?;
+        let mut problem = ProblemMetadata::get(id).await?;
 
         println!("Found problem {}, fetching data", problem.name);
-        problem.get_sample_files(force).await?;
+        let samples = problem.get_sample_files(force).await?;
+        problem.build_samples(samples)?;
 
         Ok(problem)
     }
 
     pub async fn get(id: &str) -> Result<ProblemMetadata> {
-        let url = Kattis::get_kattis_url();
+        let url = Kah::get().await?.get_kattis_url();
         let path: String = format!("{}/problems/{}", url, id);
         let response = reqwest::get(&path).await?;
 
@@ -84,25 +92,26 @@ impl ProblemMetadata {
             cpu_time_limit: cpu_time_limit.trim().to_string(),
             memory_limit: memory_limit.trim().to_string(),
             difficulty,
+            samples: Vec::new(),
         })
     }
 
-    async fn get_sample_files(&self, force: ForceProblemCreation) -> Result<()> {
+    async fn get_sample_files(&self, force: ForceProblemCreation) -> Result<Vec<String>> {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("samples.zip");
 
         let mut temp_file = File::create(&file_path).await?;
 
-        let url = Kattis::get_kattis_url();
+        let url = Kah::get().await?.get_kattis_url();
 
         let path: String = sample_files_url(url, &self.id);
         let response = reqwest::get(&path).await?;
 
         self.create_sample_folder(force).await?;
         temp_file.write_all(&response.bytes().await?).await?;
-        unzip(&file_path, &self.name).await?;
+        let files = unzip(&file_path, &self.name).await?;
         temp_dir.close()?;
-        Ok(())
+        Ok(files)
     }
 
     async fn create_sample_folder(&self, force: ForceProblemCreation) -> Result<()> {
@@ -115,5 +124,36 @@ impl ProblemMetadata {
             tokio::fs::create_dir_all(kattis_sample_directory(&self.name)).await?;
             Ok(())
         }
+    }
+
+    fn build_samples(&mut self, samples: Vec<String>) -> Result<()> {
+        let mut inputs: Vec<_> = samples
+            .iter()
+            .filter(|s| s.ends_with("in"))
+            .map(|s| s.strip_suffix(".in").unwrap())
+            .collect();
+        let mut outputs: Vec<_> = samples
+            .iter()
+            .filter(|s| s.ends_with("ans"))
+            .map(|s| s.strip_suffix(".ans").unwrap())
+            .collect();
+        inputs.sort_unstable();
+        outputs.sort_unstable();
+
+        println!("{:?}", inputs);
+        println!("{:?}", outputs);
+
+        let cwd = current_dir()?;
+        let path = PathBuf::from(kattis_sample_directory(&self.name));
+        self.samples = inputs
+            .iter()
+            .zip(outputs.iter())
+            .map(|(i, o)| Sample {
+                input_path: cwd.join(path.join(format!("{}.in", i))),
+                expected_path: cwd.join(path.join(format!("{}.ans", o))),
+            })
+            .collect();
+
+        Ok(())
     }
 }
