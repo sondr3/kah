@@ -1,11 +1,14 @@
-use crate::error::KahError::KattisrcParseError;
+use crate::{error::KahError::KattisrcParseError, language::Language, ForceProblemCreation};
 use anyhow::Result;
 use directories::ProjectDirs;
 use ini::Ini;
 use serde::{Deserialize, Serialize};
-use std::path::PathBuf;
-use tokio::fs::File;
-use tokio::io::AsyncWriteExt;
+use std::{
+    env::current_dir,
+    fmt::Display,
+    path::{Path, PathBuf},
+};
+use tokio::{fs::File, io::AsyncWriteExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Kattis {
@@ -17,6 +20,7 @@ pub(crate) struct Kattis {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct KahConfig {
+    pub(crate) code: PathBuf,
     pub(crate) dir: PathBuf,
     pub(crate) file: PathBuf,
     pub(crate) data: PathBuf,
@@ -34,6 +38,7 @@ impl Kah {
 
         let kah = Kah {
             config: KahConfig {
+                code: current_dir()?,
                 dir: config_dir.to_path_buf(),
                 file: config_dir.join("config.json"),
                 data: config_dir.join("data.json"),
@@ -68,6 +73,36 @@ impl Kah {
 
     pub(crate) fn get_kattis_url(&self) -> String {
         self.kattis.hostname.to_string()
+    }
+
+    pub(crate) async fn create_problem<T: Language + Display>(
+        &self,
+        name: &str,
+        language: &T,
+        force: ForceProblemCreation,
+    ) -> Result<()> {
+        let code = language.initial_problem_content();
+        let path = language.problem_path(name);
+
+        if !Path::new(&language.to_string()).exists() {
+            tokio::fs::create_dir_all(language.to_string()).await?;
+        }
+
+        let path = Path::new(&path);
+        if path.exists() && !force.recreate_solution() {
+            eprintln!(
+                "{} already exists for language {}",
+                name,
+                language.to_string()
+            )
+        } else {
+            let mut file = File::create(path).await?;
+            file.write_all(code.as_bytes()).await?;
+        }
+
+        println!("Created {} in {}", name, language.to_string());
+
+        Ok(())
     }
 
     async fn create_config_file(&self) -> Result<()> {

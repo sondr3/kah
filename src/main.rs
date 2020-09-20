@@ -184,12 +184,12 @@ async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result
         .items(&languages[..])
         .interact()?;
 
-    let language = Language::from_str(languages[language])?;
+    let language = Languages::from_str(languages[language])?.get_language();
     let problem = ProblemMetadata::new(problem_id, force).await?;
     let mut kah = Kah::get().await?;
 
-    kah.add_problem(&problem, &language, force).await?;
-    language.create_problem(problem.name, force).await?;
+    kah.create_problem(&problem.name, &language, force).await?;
+    kah.add_problem(&problem, language, force).await?;
 
     Ok(())
 }
