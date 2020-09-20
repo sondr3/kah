@@ -7,6 +7,7 @@ use anyhow::Result;
 use serde::export::Formatter;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::env::current_dir;
 use std::path::{Path, PathBuf};
 use std::process::exit;
 use tokio::fs::{File, OpenOptions};
@@ -82,13 +83,15 @@ impl Datafile {
             exit(1);
         }
 
+        let cwd = current_dir()?;
+
         self.problems.insert(
             problem.id.clone(),
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
-                    solution: PathBuf::from(language.problem_path(&problem.name)),
-                    samples: PathBuf::from(kattis_sample_directory(&problem.name)),
+                    solution: cwd.join(language.problem_path(&problem.name)),
+                    samples: cwd.join(kattis_sample_directory(&problem.name)),
                     language: language.to_string(),
                     solved: false,
                 },
@@ -119,6 +122,19 @@ impl Datafile {
         self.problems
             .values()
             .find(|p| p.metadata.id.contains(id) || p.metadata.name.contains(id))
+    }
+
+    pub(crate) async fn update(&mut self) -> Result<()> {
+        let cwd = current_dir()?;
+
+        self.problems.iter_mut().for_each(|(_, p)| {
+            p.solution.solution = cwd.join(p.solution.solution.clone());
+            p.solution.samples = cwd.join(p.solution.samples.clone());
+        });
+
+        self.write().await?;
+
+        Ok(())
     }
 
     async fn write(&self) -> Result<()> {

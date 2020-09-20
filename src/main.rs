@@ -91,6 +91,9 @@ pub enum Cmd {
         /// Force creation of config file
         force: bool,
     },
+
+    #[structopt(name = "update", alias = "u")]
+    Update,
 }
 
 #[derive(PartialEq, Debug, Clone, Copy)]
@@ -166,6 +169,12 @@ async fn main() -> Result<()> {
             let kattis = Kattis::new(file);
             create_kah_dotfile(".kah", &kattis, force).expect("Could not initialize kah");
             Datafile::create(force).await?;
+        }
+        Cmd::Update => {
+            let mut datafile = Datafile::get_datafile().await?;
+            datafile.update().await?;
+
+            println!("Successfully updated data");
         }
     }
 
