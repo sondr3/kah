@@ -1,5 +1,5 @@
 use crate::languages::Languages;
-use crate::utils::clean_name;
+use crate::problem::ProblemMetadata;
 use crate::{
     datafile::Problem,
     kah::Kah,
@@ -9,6 +9,8 @@ use anyhow::Result;
 use async_trait::async_trait;
 use std::fmt;
 use std::fmt::Formatter;
+use std::fs::File;
+use std::process::Stdio;
 use tokio::process::Command;
 
 #[derive(Debug)]
@@ -48,20 +50,47 @@ impl Language for Python {
     }
 
     async fn run(&self, kah: &Kah, problem: &Problem) -> Result<()> {
-        let command = Command::new(&self.config.run_command).arg("");
+        let root = &kah.config.code;
+        let file = root.join(
+            problem
+                .solution
+                .language
+                .get_language()
+                .problem_path(&problem.metadata),
+        );
+
+        for (num, case) in problem.metadata.samples.iter().enumerate() {
+            print!("Running test case #{}: ", num + 1);
+
+            let command = Command::new(&self.config.run_command)
+                .arg(&file)
+                .stdin(File::open(&case.input_path)?)
+                .stderr(Stdio::inherit())
+                .output()
+                .await?;
+
+            let expected = tokio::fs::read_to_string(&case.expected_path).await?;
+            let correct = problem.check_output(expected, String::from_utf8(command.stdout)?);
+
+            println!("{}", if correct { "OK" } else { "FAIL" });
+        }
 
         Ok(())
     }
 
-    fn configuration(&self) -> &LanguageConfig {
+    fn config(&self) -> &LanguageConfig {
         &self.config
     }
 
-    fn problem_path(&self, name: &str) -> String {
+    fn language_path(&self) -> String {
+        self.config.variant.to_string().to_ascii_lowercase()
+    }
+
+    fn problem_path(&self, problem: &ProblemMetadata) -> String {
         format!(
             "{}/{}.{}",
-            self.config.variant,
-            clean_name(name),
+            self.config.variant.to_string().to_ascii_lowercase(),
+            problem.as_os_str(),
             self.config.extension
         )
     }

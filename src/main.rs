@@ -10,9 +10,8 @@ mod utils;
 use crate::{
     error::KahError::{self, ForceProblemCreationError, NoSuchProblem},
     kah::Kah,
-    language::Language,
+    languages::Languages,
     problem::ProblemMetadata,
-    test::test_kattis,
 };
 use anyhow::Result;
 use dialoguer::{theme::ColorfulTheme, Select};
@@ -56,10 +55,7 @@ pub enum Cmd {
     /// Run tests for a Kattis problem locally
     Test {
         /// Kattis problem to test
-        file: String,
-        #[structopt(short, long)]
-        /// Select language for problem
-        language: Option<String>,
+        problem_id: String,
     },
 
     #[structopt(name = "submit", alias = "s")]
@@ -152,7 +148,14 @@ async fn main() -> Result<()> {
         Cmd::Problem { id, force } => {
             create_problem(&id, ForceProblemCreation::try_from(force)?).await?
         }
-        Cmd::Test { .. } => test_kattis()?,
+        Cmd::Test { problem_id } => {
+            let kah = Kah::get().await?;
+            let problem = match kah.get_problem(&problem_id).await {
+                Some(x) => Ok(x),
+                None => Err(NoSuchProblem(problem_id)),
+            }?;
+            kah.test_problem(&problem).await?;
+        }
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Info { problem } => {
             let kah = Kah::get().await?;

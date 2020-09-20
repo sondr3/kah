@@ -42,6 +42,15 @@ impl PartialEq for Problem {
     }
 }
 
+impl Problem {
+    pub(crate) fn check_output(&self, expected: String, output: String) -> bool {
+        let expected: String = expected.trim_end().lines().map(|s| s.trim_end()).collect();
+        let actual: String = output.trim_end().lines().map(|s| s.trim_end()).collect();
+
+        actual == expected
+    }
+}
+
 impl Kah {
     pub(crate) async fn create_datafile(&self, force: bool) -> Result<()> {
         if self.datafile_exists() && !force {
@@ -76,7 +85,7 @@ impl Kah {
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
-                    language: language.configuration().variant,
+                    language: language.config().variant,
                     solved: false,
                 },
             },
