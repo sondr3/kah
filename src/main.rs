@@ -1,20 +1,19 @@
 mod datafile;
 mod error;
 mod kah;
-mod kattis;
 mod language;
+mod languages;
 mod problem;
 mod test;
 mod utils;
 
-use crate::datafile::Datafile;
-use crate::error::KahError;
-use crate::error::KahError::{ForceProblemCreationError, NoSuchProblem};
-use crate::init::create_kah_dotfile;
-use crate::kattis::Kattis;
-use crate::language::Language;
-use crate::problem::ProblemMetadata;
-use crate::test::test_kattis;
+use crate::{
+    error::KahError::{self, ForceProblemCreationError, NoSuchProblem},
+    kah::Kah,
+    language::Language,
+    problem::ProblemMetadata,
+    test::test_kattis,
+};
 use anyhow::Result;
 use dialoguer::{theme::ColorfulTheme, Select};
 use serde::export::TryFrom;
@@ -156,8 +155,8 @@ async fn main() -> Result<()> {
         Cmd::Test { .. } => test_kattis()?,
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Info { problem } => {
-            let datafile = Datafile::get_datafile().await?;
-            let problem = match datafile.get_problem(&problem) {
+            let kah = Kah::get().await?;
+            let problem = match kah.get_problem(&problem).await {
                 Some(problem) => problem,
                 None => return Err(NoSuchProblem(problem).into()),
             };
@@ -166,11 +165,10 @@ async fn main() -> Result<()> {
         }
         Cmd::Init { file, force } => {
             Kah::new(file, force).await?;
-            Datafile::create(force).await?;
         }
         Cmd::Update => {
-            let mut datafile = Datafile::get_datafile().await?;
-            datafile.update().await?;
+            let mut kah = Kah::get().await?;
+            kah.update().await?;
 
             println!("Successfully updated data");
         }
@@ -188,9 +186,9 @@ async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result
 
     let language = Language::from_str(languages[language])?;
     let problem = ProblemMetadata::new(problem_id, force).await?;
-    let mut datafile = Datafile::get_datafile().await?;
+    let mut kah = Kah::get().await?;
 
-    datafile.add_problem(&problem, &language, force).await?;
+    kah.add_problem(&problem, &language, force).await?;
     language.create_problem(problem.name, force).await?;
 
     Ok(())

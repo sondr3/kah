@@ -1,30 +1,23 @@
-use crate::error::KahError::FileDoesNotExist;
-use crate::language::Language;
-use crate::problem::ProblemMetadata;
-use crate::utils::kattis_sample_directory;
-use crate::ForceProblemCreation;
+use crate::kah::Kah;
+use crate::{language::Language, problem::ProblemMetadata, ForceProblemCreation};
 use anyhow::Result;
-use serde::export::Formatter;
-use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
-use std::env::current_dir;
-use std::path::{Path, PathBuf};
-use std::process::exit;
-use tokio::fs::{File, OpenOptions};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
+use serde::{export::Formatter, Deserialize, Serialize};
+use std::{collections::HashMap, env::current_dir, process::exit};
+use tokio::{
+    fs::{File, OpenOptions},
+    io::AsyncWriteExt,
+};
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Solution {
-    solution: PathBuf,
-    samples: PathBuf,
-    language: String,
-    solved: bool,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub(crate) struct Solution {
+    pub(crate) language: String,
+    pub(crate) solved: bool,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct Problem {
-    metadata: ProblemMetadata,
-    solution: Solution,
+    pub(crate) metadata: ProblemMetadata,
+    pub(crate) solution: Solution,
 }
 
 impl std::fmt::Display for Problem {
@@ -47,23 +40,15 @@ impl PartialEq for Problem {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Datafile {
-    problems: HashMap<String, Problem>,
-}
-
-impl Datafile {
-    pub(crate) async fn create(force: bool) -> Result<()> {
-        let path = Path::new(".kahdata");
-
-        if path.exists() && !force {
+impl Kah {
+    pub(crate) async fn create_datafile(&self, force: bool) -> Result<()> {
+        if self.datafile_exists() && !force {
             eprintln!("Data file already exists.");
             exit(0);
         } else {
-            let mut file = File::create(path).await?;
-            let json = serde_json::to_string_pretty::<Datafile>(&Datafile {
-                problems: HashMap::new(),
-            })?;
+            let mut file = File::create(&self.config.data).await?;
+            let map: HashMap<String, Problem> = HashMap::new();
+            let json = serde_json::to_string_pretty(&map)?;
             file.write_all(&json.into_bytes()).await?;
         }
 
@@ -78,72 +63,60 @@ impl Datafile {
         language: &Language,
         force: ForceProblemCreation,
     ) -> Result<()> {
-        if self.problems.contains_key(&problem.id) && !force.recreate_metadata() {
+        let mut problems = self.open_datafile().await?;
+        if problems.contains_key(&problem.id) && !force.recreate_metadata() {
             eprintln!("Problem {} already exists, aborting", problem.name);
             exit(1);
         }
 
         let cwd = current_dir()?;
 
-        self.problems.insert(
+        problems.insert(
             problem.id.clone(),
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
-                    solution: cwd.join(language.problem_path(&problem.name)),
-                    samples: cwd.join(kattis_sample_directory(&problem.name)),
                     language: language.to_string(),
                     solved: false,
                 },
             },
         );
 
-        self.write().await?;
+        self.write_datafile(&problems).await?;
 
         Ok(())
     }
 
-    pub(crate) async fn get_datafile() -> Result<Datafile> {
-        let path = Path::new(".kahdata");
+    pub(crate) async fn get_problem(&self, id: &str) -> Option<Problem> {
+        let problems = self.open_datafile().await.ok()?;
 
-        if !path.exists() {
-            return Err(FileDoesNotExist(path.to_path_buf()).into());
-        }
-
-        let mut file = File::open(path).await?;
-        let mut buffer = String::new();
-        file.read_to_string(&mut buffer).await?;
-        let datafile = serde_json::from_str(&buffer)?;
-
-        Ok(datafile)
-    }
-
-    pub(crate) fn get_problem(&self, id: &str) -> Option<&Problem> {
-        self.problems
+        problems
             .values()
+            .cloned()
             .find(|p| p.metadata.id.contains(id) || p.metadata.name.contains(id))
     }
 
     pub(crate) async fn update(&mut self) -> Result<()> {
-        let cwd = current_dir()?;
-
-        self.problems.iter_mut().for_each(|(_, p)| {
-            p.solution.solution = cwd.join(p.solution.solution.clone());
-            p.solution.samples = cwd.join(p.solution.samples.clone());
-        });
-
-        self.write().await?;
-
         Ok(())
     }
 
-    async fn write(&self) -> Result<()> {
-        let path = Path::new(".kahdata");
-        let json = serde_json::to_string_pretty(self)?;
+    pub(crate) fn datafile_exists(&self) -> bool {
+        self.config.data.exists()
+    }
+
+    async fn open_datafile(&self) -> Result<HashMap<String, Problem>> {
+        let file = tokio::fs::read_to_string(&self.config.data).await?;
+        let result = serde_json::from_str(&file)?;
+
+        Ok(result)
+    }
+
+    async fn write_datafile(&self, datafile: &HashMap<String, Problem>) -> Result<()> {
+        let json = serde_json::to_string_pretty(&datafile)?;
         let mut file = OpenOptions::new()
             .write(true)
             .append(false)
-            .open(&path)
+            .open(&self.config.data)
             .await?;
 
         file.write_all(&json.into_bytes()).await?;
