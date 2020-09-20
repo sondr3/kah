@@ -15,4 +15,6 @@ pub enum KahError {
     NoSuchProblem(String),
     #[error("No such flag: {0}")]
     ForceProblemCreationError(u64),
+    #[error("Could not parse kattisrc")]
+    KattisrcParseError,
 }
