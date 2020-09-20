@@ -1,8 +1,10 @@
-use crate::kah::Kah;
-use crate::{language::Language, problem::ProblemMetadata, ForceProblemCreation};
+use crate::{
+    kah::Kah, language::Language, languages::Languages, problem::ProblemMetadata,
+    ForceProblemCreation,
+};
 use anyhow::Result;
-use serde::{export::Formatter, Deserialize, Serialize};
-use std::{collections::HashMap, env::current_dir, process::exit};
+use serde::{Deserialize, Serialize};
+use std::{collections::HashMap, fmt::Formatter, process::exit};
 use tokio::{
     fs::{File, OpenOptions},
     io::AsyncWriteExt,
@@ -10,7 +12,7 @@ use tokio::{
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Solution {
-    pub(crate) language: String,
+    pub(crate) language: Languages,
     pub(crate) solved: bool,
 }
 
@@ -21,7 +23,7 @@ pub struct Problem {
 }
 
 impl std::fmt::Display for Problem {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         write!(
             f,
             "{} ({})\nCPU: {}, MEM: {}, DIF: {}",
@@ -57,10 +59,10 @@ impl Kah {
         Ok(())
     }
 
-    pub(crate) async fn add_problem(
+    pub(crate) async fn add_problem<T: Language>(
         &mut self,
         problem: &ProblemMetadata,
-        language: &Language,
+        language: T,
         force: ForceProblemCreation,
     ) -> Result<()> {
         let mut problems = self.open_datafile().await?;
@@ -69,14 +71,12 @@ impl Kah {
             exit(1);
         }
 
-        let cwd = current_dir()?;
-
         problems.insert(
             problem.id.clone(),
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
-                    language: language.to_string(),
+                    language: language.configuration().variant,
                     solved: false,
                 },
             },
