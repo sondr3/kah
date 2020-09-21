@@ -1,16 +1,13 @@
-use crate::languages::Languages;
-use crate::problem::ProblemMetadata;
 use crate::{
-    datafile::Problem,
-    kah::Kah,
     language::{Language, LanguageConfig},
+    languages::Languages,
+    problem::ProblemMetadata,
+    test::Test,
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use std::fmt;
-use std::fmt::Formatter;
-use std::fs::File;
-use std::process::Stdio;
+use std::{fmt, fmt::Formatter, process::Stdio};
+use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
 #[derive(Debug)]
@@ -45,32 +42,37 @@ impl Python {
 
 #[async_trait]
 impl Language for Python {
-    async fn build(&self, _: &Problem) -> Result<()> {
+    async fn build(&self, _: &Test) -> Result<()> {
         Ok(())
     }
 
-    async fn run(&self, kah: &Kah, problem: &Problem) -> Result<()> {
-        let root = &kah.config.code;
+    async fn run(&self, test: &Test) -> Result<()> {
+        let root = &test.code_dir;
         let file = root.join(
-            problem
+            test.problem
                 .solution
                 .language
                 .get_language()
-                .problem_path(&problem.metadata),
+                .problem_path(&test.problem.metadata),
         );
 
-        for (num, case) in problem.metadata.samples.iter().enumerate() {
+        for (num, case) in test.problem.metadata.samples.iter().enumerate() {
             print!("Running test case #{}: ", num + 1);
 
-            let command = Command::new(&self.config.run_command)
+            let mut command = Command::new(&self.config.run_command)
                 .arg(&file)
-                .stdin(File::open(&case.input_path)?)
-                .stderr(Stdio::inherit())
-                .output()
-                .await?;
+                .stdout(Stdio::piped())
+                .stdin(Stdio::piped())
+                .stderr(Stdio::piped())
+                .spawn()?;
 
-            let expected = tokio::fs::read_to_string(&case.expected_path).await?;
-            let correct = problem.check_output(expected, String::from_utf8(command.stdout)?);
+            let stdin = command.stdin.as_mut().unwrap();
+            stdin.write_all(case.input.as_bytes()).await?;
+
+            let output = command.wait_with_output().await?;
+            let stdout = String::from_utf8(output.stdout)?;
+
+            let correct = test.problem.check_output(&case.expected, stdout);
 
             println!("{}", if correct { "OK" } else { "FAIL" });
         }

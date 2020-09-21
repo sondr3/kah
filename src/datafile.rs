@@ -43,7 +43,7 @@ impl PartialEq for Problem {
 }
 
 impl Problem {
-    pub(crate) fn check_output(&self, expected: String, output: String) -> bool {
+    pub(crate) fn check_output(&self, expected: &str, output: String) -> bool {
         let expected: String = expected.trim_end().lines().map(|s| s.trim_end()).collect();
         let actual: String = output.trim_end().lines().map(|s| s.trim_end()).collect();
 

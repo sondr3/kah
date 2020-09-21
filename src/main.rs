@@ -12,6 +12,7 @@ use crate::{
     kah::Kah,
     languages::Languages,
     problem::ProblemMetadata,
+    test::Test,
 };
 use anyhow::Result;
 use dialoguer::{theme::ColorfulTheme, Select};
@@ -22,9 +23,9 @@ use structopt::{clap::AppSettings, StructOpt};
 
 #[derive(StructOpt, PartialEq, Debug)]
 #[structopt(
-    name = "kah",
-    about = "a simple Kattis helper utility",
-    global_settings(& [AppSettings::ColoredHelp])
+name = "kah",
+about = "a simple Kattis helper utility",
+global_settings(& [AppSettings::ColoredHelp])
 )]
 pub struct Opt {
     #[structopt(short, long)]
@@ -56,6 +57,9 @@ pub enum Cmd {
     Test {
         /// Kattis problem to test
         problem_id: String,
+        #[structopt(short, long)]
+        /// Run tests verbosely (e.g. print output, stderr)
+        verbose: bool,
     },
 
     #[structopt(name = "submit", alias = "s")]
@@ -139,13 +143,17 @@ async fn main() -> Result<()> {
         Cmd::Problem { id, force } => {
             create_problem(&id, ForceProblemCreation::try_from(force)?).await?
         }
-        Cmd::Test { problem_id } => {
+        Cmd::Test {
+            problem_id,
+            verbose,
+        } => {
             let kah = Kah::get().await?;
             let problem = match kah.get_problem(&problem_id).await {
                 Some(x) => Ok(x),
                 None => Err(NoSuchProblem(problem_id)),
             }?;
-            kah.test_problem(&problem).await?;
+            let mut test = Test::new(&kah, problem, verbose);
+            test.run().await?;
         }
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Info { problem } => {
