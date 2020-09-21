@@ -22,11 +22,7 @@ use std::str::FromStr;
 use structopt::{clap::AppSettings, StructOpt};
 
 #[derive(StructOpt, PartialEq, Debug)]
-#[structopt(
-name = "kah",
-about = "a simple Kattis helper utility",
-global_settings(& [AppSettings::ColoredHelp])
-)]
+#[structopt(name = "kah", about = "a simple Kattis helper utility", global_settings(& [AppSettings::ColoredHelp]))]
 pub struct Opt {
     #[structopt(short, long)]
     /// Verbose messages

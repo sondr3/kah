@@ -1,7 +1,9 @@
+use crate::utils::{average_duration, max_duration, min_duration};
 use crate::{datafile::Problem, kah::Kah, language::Language};
 use anyhow::Result;
 use std::path::PathBuf;
 use tempfile::tempdir;
+use tokio::time::Duration;
 
 #[derive(Debug)]
 pub(crate) struct Test {
@@ -9,6 +11,52 @@ pub(crate) struct Test {
     pub(crate) temp_dir: PathBuf,
     pub(crate) code_dir: PathBuf,
     pub(crate) verbose: bool,
+}
+
+#[derive(Debug)]
+pub(crate) struct TestResult {
+    pub(crate) timings: Vec<Duration>,
+    pub(crate) results: Vec<bool>,
+}
+
+impl TestResult {
+    pub(crate) fn new() -> Self {
+        TestResult {
+            timings: Vec::new(),
+            results: Vec::new(),
+        }
+    }
+
+    pub(crate) fn report(&self, test: &Test) {
+        println!("{: <10} {: <10} {: <10}", "Case", "Result", "Time");
+        println!("{: <10} {: <10} {: <10}", "----", "------", "----");
+
+        for (num, (result, timing)) in self.results.iter().zip(self.timings.iter()).enumerate() {
+            println!(
+                "#{: <10}{: <10} {}ms",
+                num + 1,
+                if *result { "OK" } else { "FAIL" },
+                timing.as_millis()
+            );
+        }
+
+        if test.verbose {
+            println!(
+                "\n{: <10} {: <10} {: <10}",
+                "Avg time", "Min time", "Max time"
+            );
+            println!(
+                "{: <10} {: <10} {: <10}",
+                "--------", "--------", "--------"
+            );
+            println!(
+                "{: <10} {: <10} {: <10}",
+                average_duration(&self.timings, test.problem.metadata.samples.len()),
+                min_duration(&self.timings),
+                max_duration(&self.timings),
+            )
+        }
+    }
 }
 
 impl Test {
@@ -23,7 +71,8 @@ impl Test {
 
     pub(crate) async fn run(&mut self) -> Result<()> {
         self.build_problem().await?;
-        self.run_tests().await?;
+        let result = self.run_tests().await?;
+        result.report(self);
 
         Ok(())
     }
@@ -37,7 +86,7 @@ impl Test {
             .await
     }
 
-    async fn run_tests(&self) -> Result<()> {
+    async fn run_tests(&self) -> Result<TestResult> {
         self.problem
             .solution
             .language

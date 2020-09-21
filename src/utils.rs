@@ -2,6 +2,7 @@ use crate::problem::Sample;
 use anyhow::Result;
 use std::{io::Read, path::PathBuf};
 use tokio::fs::File;
+use tokio::time::Duration;
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 struct ZipFile {
@@ -40,4 +41,28 @@ pub(crate) async fn unzip(file_name: &PathBuf) -> Result<Vec<Sample>> {
         .collect();
 
     Ok(samples)
+}
+
+pub(crate) fn average_duration(timings: &[Duration], count: usize) -> String {
+    format_duration(Duration::from_secs_f64(
+        timings.iter().map(|t| t.as_secs_f64()).sum::<f64>() / count as f64,
+    ))
+}
+
+pub(crate) fn min_duration(timings: &[Duration]) -> String {
+    format_duration(match timings.iter().min() {
+        Some(x) => *x,
+        None => Duration::from_secs(0),
+    })
+}
+
+pub(crate) fn max_duration(timings: &[Duration]) -> String {
+    format_duration(match timings.iter().max() {
+        Some(x) => *x,
+        None => Duration::from_secs(0),
+    })
+}
+
+fn format_duration(duration: Duration) -> String {
+    format!("{:.2?}s", duration.as_secs_f64())
 }

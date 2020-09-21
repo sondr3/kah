@@ -1,3 +1,4 @@
+use crate::test::TestResult;
 use crate::{
     language::{Language, LanguageConfig},
     languages::Languages,
@@ -6,7 +7,7 @@ use crate::{
 };
 use anyhow::Result;
 use async_trait::async_trait;
-use std::{fmt, fmt::Formatter, process::Stdio};
+use std::{fmt, fmt::Formatter, process::Stdio, time::Instant};
 use tokio::io::AsyncWriteExt;
 use tokio::process::Command;
 
@@ -46,7 +47,7 @@ impl Language for Python {
         Ok(())
     }
 
-    async fn run(&self, test: &Test) -> Result<()> {
+    async fn run(&self, test: &Test) -> Result<TestResult> {
         let root = &test.code_dir;
         let file = root.join(
             test.problem
@@ -56,9 +57,10 @@ impl Language for Python {
                 .problem_path(&test.problem.metadata),
         );
 
-        for (num, case) in test.problem.metadata.samples.iter().enumerate() {
-            print!("Running test case #{}: ", num + 1);
+        let mut result = TestResult::new();
 
+        for case in &test.problem.metadata.samples {
+            let before = Instant::now();
             let mut command = Command::new(&self.config.run_command)
                 .arg(&file)
                 .stdout(Stdio::piped())
@@ -70,14 +72,17 @@ impl Language for Python {
             stdin.write_all(case.input.as_bytes()).await?;
 
             let output = command.wait_with_output().await?;
+            let after = Instant::now();
+            let duration = after - before;
+            result.timings.push(duration);
             let stdout = String::from_utf8(output.stdout)?;
 
-            let correct = test.problem.check_output(&case.expected, stdout);
-
-            println!("{}", if correct { "OK" } else { "FAIL" });
+            result
+                .results
+                .push(test.problem.check_output(&case.expected, stdout));
         }
 
-        Ok(())
+        Ok(result)
     }
 
     fn config(&self) -> &LanguageConfig {
