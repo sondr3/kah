@@ -114,6 +114,10 @@ impl Kah {
     }
 
     async fn open_datafile(&self) -> Result<HashMap<String, Problem>> {
+        if !self.datafile_exists() {
+            self.write_datafile(&HashMap::new()).await?;
+        }
+
         let file = tokio::fs::read_to_string(&self.config.data).await?;
         let result = serde_json::from_str(&file)?;
 
@@ -123,6 +127,7 @@ impl Kah {
     async fn write_datafile(&self, datafile: &HashMap<String, Problem>) -> Result<()> {
         let json = serde_json::to_string_pretty(&datafile)?;
         let mut file = OpenOptions::new()
+            .create(true)
             .write(true)
             .append(false)
             .open(&self.config.data)
