@@ -10,7 +10,6 @@ use std::{
     env::current_dir,
     fmt::Display,
     path::{Path, PathBuf},
-    process::exit,
 };
 use tokio::{fs::File, io::AsyncWriteExt};
 
@@ -97,11 +96,10 @@ impl Kah {
         let path = Path::new(&path);
         if path.exists() && !force.recreate_solution() {
             eprintln!(
-                "{} already exists for language {}",
+                "{} already exists for language {}, skipping code creation",
                 problem.name,
                 language.to_string()
             );
-            exit(0);
         } else {
             let mut file = File::create(path).await?;
             file.write_all(code.as_bytes()).await?;

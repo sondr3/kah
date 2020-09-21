@@ -99,15 +99,6 @@ pub(crate) enum ForceProblemCreation {
 }
 
 impl ForceProblemCreation {
-    pub(crate) fn recreate_samples(&self) -> bool {
-        match self {
-            ForceProblemCreation::Nothing => false,
-            ForceProblemCreation::Samples
-            | ForceProblemCreation::SamplesMetadata
-            | ForceProblemCreation::SamplesMetadataSolution => true,
-        }
-    }
-
     pub(crate) fn recreate_metadata(&self) -> bool {
         match self {
             ForceProblemCreation::Nothing | ForceProblemCreation::Samples => false,
@@ -188,7 +179,7 @@ async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result
         .interact()?;
 
     let language = Languages::from_str(languages[language])?.get_language();
-    let problem = ProblemMetadata::new(problem_id, force).await?;
+    let problem = ProblemMetadata::new(problem_id).await?;
     let mut kah = Kah::get().await?;
 
     kah.create_problem(&problem, &language, force).await?;

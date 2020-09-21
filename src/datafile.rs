@@ -76,7 +76,7 @@ impl Kah {
     ) -> Result<()> {
         let mut problems = self.open_datafile().await?;
         if problems.contains_key(&problem.id) && !force.recreate_metadata() {
-            eprintln!("Problem {} already exists, aborting", problem.name);
+            eprintln!("Datafile already contains {}, aborting", problem.name);
             exit(1);
         }
 

@@ -2,7 +2,6 @@ use crate::{
     error::KahError::{FetchError, ScrapeError},
     kah::Kah,
     utils::*,
-    ForceProblemCreation,
 };
 use anyhow::Result;
 use select::{
@@ -10,14 +9,22 @@ use select::{
     predicate::{Class, Name, Predicate},
 };
 use serde::{Deserialize, Serialize};
-use std::{env::current_dir, path::Path, path::PathBuf, process::exit};
 use tempfile::tempdir;
 use tokio::{fs::File, io::AsyncWriteExt};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Sample {
-    pub(crate) input_path: PathBuf,
-    pub(crate) expected_path: PathBuf,
+    pub(crate) input: String,
+    pub(crate) expected: String,
+}
+
+impl Default for Sample {
+    fn default() -> Self {
+        Sample {
+            input: "".to_string(),
+            expected: "".to_string(),
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -31,12 +38,11 @@ pub struct ProblemMetadata {
 }
 
 impl ProblemMetadata {
-    pub(crate) async fn new(id: &str, force: ForceProblemCreation) -> Result<ProblemMetadata> {
+    pub(crate) async fn new(id: &str) -> Result<ProblemMetadata> {
         let mut problem = ProblemMetadata::get(id).await?;
 
         println!("Found problem {}, fetching data", problem.name);
-        let samples = problem.get_sample_files(force).await?;
-        problem.build_samples(samples)?;
+        problem.get_samples().await?;
 
         Ok(problem)
     }
@@ -96,7 +102,7 @@ impl ProblemMetadata {
         })
     }
 
-    async fn get_sample_files(&self, force: ForceProblemCreation) -> Result<Vec<String>> {
+    async fn get_samples(&mut self) -> Result<()> {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("samples.zip");
 
@@ -107,62 +113,14 @@ impl ProblemMetadata {
         let path: String = self.sample_files_url(url);
         let response = reqwest::get(&path).await?;
 
-        self.create_sample_folder(force).await?;
         temp_file.write_all(&response.bytes().await?).await?;
-        let files = unzip(&file_path, &self).await?;
+        self.samples = unzip(&file_path).await?;
         temp_dir.close()?;
-        Ok(files)
-    }
-
-    async fn create_sample_folder(&self, force: ForceProblemCreation) -> Result<()> {
-        let path = Path::new(&self.kattis_sample_directory()).exists();
-
-        if path && !force.recreate_samples() {
-            println!("Samples already exist, skipping...");
-            exit(0);
-        } else {
-            tokio::fs::create_dir_all(&self.kattis_sample_directory()).await?;
-            Ok(())
-        }
-    }
-
-    fn build_samples(&mut self, samples: Vec<String>) -> Result<()> {
-        let mut inputs: Vec<_> = samples
-            .iter()
-            .filter(|s| s.ends_with("in"))
-            .map(|s| s.strip_suffix(".in").unwrap())
-            .collect();
-        let mut outputs: Vec<_> = samples
-            .iter()
-            .filter(|s| s.ends_with("ans"))
-            .map(|s| s.strip_suffix(".ans").unwrap())
-            .collect();
-        inputs.sort_unstable();
-        outputs.sort_unstable();
-
-        println!("{:?}", inputs);
-        println!("{:?}", outputs);
-
-        let cwd = current_dir()?;
-        let path = PathBuf::from(&self.kattis_sample_directory());
-        self.samples = inputs
-            .iter()
-            .zip(outputs.iter())
-            .map(|(i, o)| Sample {
-                input_path: cwd.join(path.join(format!("{}.in", i))),
-                expected_path: cwd.join(path.join(format!("{}.ans", o))),
-            })
-            .collect();
-
         Ok(())
     }
 
     fn sample_files_url(&self, url: String) -> String {
         format!("{}/problems/{}/file/statement/samples.zip", url, self.id)
-    }
-
-    pub(crate) fn kattis_sample_directory(&self) -> String {
-        format!("samples/{}/", self.as_os_str())
     }
 
     pub(crate) fn as_os_str(&self) -> String {
