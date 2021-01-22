@@ -5,7 +5,6 @@ use crate::{
     test::{Test, TestResult},
 };
 use anyhow::Result;
-use async_trait::async_trait;
 use std::{fmt, fmt::Formatter};
 
 #[derive(Debug)]
@@ -38,13 +37,12 @@ impl Python {
     }
 }
 
-#[async_trait]
 impl Language for Python {
-    async fn build(&self, _: &Test) -> Result<()> {
+    fn build(&self, _: &Test) -> Result<()> {
         Ok(())
     }
 
-    async fn run(&self, test: &Test) -> Result<TestResult> {
+    fn run(&self, test: &Test) -> Result<TestResult> {
         let root = &test.code_dir;
         let file = root.join(
             test.problem
@@ -54,7 +52,7 @@ impl Language for Python {
                 .problem_path(&test.problem.metadata),
         );
 
-        run_problem(&self.config.run_command, &file, test).await
+        run_problem(&self.config.run_command, &file, test)
     }
 
     fn config(&self) -> &LanguageConfig {

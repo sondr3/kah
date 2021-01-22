@@ -9,9 +9,11 @@ use serde::{Deserialize, Serialize};
 use std::{
     env::current_dir,
     fmt::Display,
+    fs,
+    fs::{read_to_string, File},
+    io::Write,
     path::{Path, PathBuf},
 };
-use tokio::{fs::File, io::AsyncWriteExt};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub(crate) struct Kattis {
@@ -36,13 +38,13 @@ pub(crate) struct Kah {
 }
 
 impl Kah {
-    pub(crate) async fn new(kattisrc_path: PathBuf, force: bool) -> Result<Self> {
+    pub(crate) fn new(kattisrc_path: PathBuf, force: bool) -> Result<Self> {
         let config_dir = Kah::project_dir().config_dir().to_owned();
 
         let kah = Kah {
             config: KahConfig {
                 code: current_dir()?,
-                dir: config_dir.to_path_buf(),
+                dir: config_dir.clone(),
                 file: config_dir.join("config.json"),
                 data: config_dir.join("data.json"),
             },
@@ -52,23 +54,23 @@ impl Kah {
             }?,
         };
 
-        kah.create_config_dir(force).await?;
+        kah.create_config_dir(force)?;
         if !kah.kattisrc_exists() {
-            tokio::fs::copy(&kattisrc_path, config_dir.join("kattisrc")).await?;
-            tokio::fs::remove_file(&kattisrc_path).await?;
+            fs::copy(&kattisrc_path, config_dir.join("kattisrc"))?;
+            fs::remove_file(&kattisrc_path)?;
         }
 
-        kah.create_config_file().await?;
-        kah.create_datafile(force).await?;
+        kah.create_config_file()?;
+        kah.create_datafile(force)?;
 
         println!("Successfully created configuration");
 
         Ok(kah)
     }
 
-    pub(crate) async fn get() -> Result<Self> {
+    pub(crate) fn get() -> Result<Self> {
         let path = Kah::project_dir().config_dir().join("config.json");
-        let file = tokio::fs::read_to_string(path).await?;
+        let file = read_to_string(path)?;
 
         let result = serde_json::from_str(&file)?;
         Ok(result)
@@ -78,7 +80,7 @@ impl Kah {
         self.kattis.hostname.to_string()
     }
 
-    pub(crate) async fn create_problem<T: Language + Display>(
+    pub(crate) fn create_problem<T: Language + Display>(
         &mut self,
         problem: &ProblemMetadata,
         language: &T,
@@ -90,7 +92,7 @@ impl Kah {
         let language_folder = &language.language_path();
 
         if !Path::new(language_folder).exists() {
-            tokio::fs::create_dir_all(language_folder).await?;
+            fs::create_dir_all(language_folder)?;
         }
 
         let path = Path::new(&path);
@@ -101,24 +103,24 @@ impl Kah {
                 language.to_string()
             );
         } else {
-            let mut file = File::create(path).await?;
-            file.write_all(code.as_bytes()).await?;
+            let mut file = File::create(path)?;
+            file.write_all(code.as_bytes())?;
         }
 
         println!("Created {} in {}", problem.name, language.to_string());
 
-        self.add_problem(problem, language, force).await?;
+        self.add_problem(problem, language, force)?;
 
         Ok(())
     }
 
-    async fn create_config_file(&self) -> Result<()> {
-        let mut file = File::create(&self.config.file).await?;
+    fn create_config_file(&self) -> Result<()> {
+        let mut file = File::create(&self.config.file)?;
 
         let json = serde_json::to_string_pretty(self)?;
         let buffer = json.into_bytes();
 
-        file.write_all(&buffer).await?;
+        file.write_all(&buffer)?;
 
         Ok(())
     }
@@ -131,9 +133,9 @@ impl Kah {
         self.config.dir.join("kattisrc").exists()
     }
 
-    async fn create_config_dir(&self, force: bool) -> Result<()> {
+    fn create_config_dir(&self, force: bool) -> Result<()> {
         if !self.config_exists() && !force {
-            tokio::fs::create_dir_all(&self.config.dir).await?;
+            fs::create_dir_all(&self.config.dir)?;
         }
 
         Ok(())

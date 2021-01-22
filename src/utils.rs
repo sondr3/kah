@@ -1,8 +1,6 @@
 use crate::problem::Sample;
 use anyhow::Result;
-use std::{io::Read, path::PathBuf};
-use tokio::fs::File;
-use tokio::time::Duration;
+use std::{fs::File, io::Read, path::PathBuf, time::Duration};
 
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 struct ZipFile {
@@ -10,8 +8,8 @@ struct ZipFile {
     content: String,
 }
 
-pub(crate) async fn unzip(file_name: &PathBuf) -> Result<Vec<Sample>> {
-    let file = File::open(&file_name).await?.into_std().await;
+pub(crate) fn unzip(file_name: &PathBuf) -> Result<Vec<Sample>> {
+    let file = File::open(&file_name)?;
     let mut archive = zip::ZipArchive::new(file)?;
 
     let mut files = Vec::new();

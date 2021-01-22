@@ -4,11 +4,9 @@ use crate::{
 };
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
+use std::fs::{read_to_string, File, OpenOptions};
+use std::io::Write;
 use std::{collections::HashMap, fmt::Formatter, process::exit};
-use tokio::{
-    fs::{File, OpenOptions},
-    io::AsyncWriteExt,
-};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Solution {
@@ -52,15 +50,15 @@ impl Problem {
 }
 
 impl Kah {
-    pub(crate) async fn create_datafile(&self, force: bool) -> Result<()> {
+    pub(crate) fn create_datafile(&self, force: bool) -> Result<()> {
         if self.datafile_exists() && !force {
             eprintln!("Data file already exists.");
             exit(0);
         } else {
-            let mut file = File::create(&self.config.data).await?;
+            let mut file = File::create(&self.config.data)?;
             let map: HashMap<String, Problem> = HashMap::new();
             let json = serde_json::to_string_pretty(&map)?;
-            file.write_all(&json.into_bytes()).await?;
+            file.write_all(&json.into_bytes())?;
         }
 
         println!("Data file successfully created");
@@ -68,13 +66,13 @@ impl Kah {
         Ok(())
     }
 
-    pub(crate) async fn add_problem<T: Language>(
+    pub(crate) fn add_problem<T: Language>(
         &mut self,
         problem: &ProblemMetadata,
         language: &T,
         force: ForceProblemCreation,
     ) -> Result<()> {
-        let mut problems = self.open_datafile().await?;
+        let mut problems = self.open_datafile()?;
         if problems.contains_key(&problem.id) && !force.recreate_metadata() {
             eprintln!("Datafile already contains {}, aborting", problem.name);
             exit(1);
@@ -91,13 +89,13 @@ impl Kah {
             },
         );
 
-        self.write_datafile(&problems).await?;
+        self.write_datafile(&problems)?;
 
         Ok(())
     }
 
-    pub(crate) async fn get_problem(&self, id: &str) -> Option<Problem> {
-        let problems = self.open_datafile().await.ok()?;
+    pub(crate) fn get_problem(&self, id: &str) -> Option<Problem> {
+        let problems = self.open_datafile().ok()?;
 
         problems
             .values()
@@ -105,7 +103,7 @@ impl Kah {
             .find(|p| p.metadata.id.contains(id) || p.metadata.name.contains(id))
     }
 
-    pub(crate) async fn update(&mut self) -> Result<()> {
+    pub(crate) fn update(&mut self) -> Result<()> {
         Ok(())
     }
 
@@ -113,27 +111,26 @@ impl Kah {
         self.config.data.exists()
     }
 
-    async fn open_datafile(&self) -> Result<HashMap<String, Problem>> {
+    fn open_datafile(&self) -> Result<HashMap<String, Problem>> {
         if !self.datafile_exists() {
-            self.write_datafile(&HashMap::new()).await?;
+            self.write_datafile(&HashMap::new())?;
         }
 
-        let file = tokio::fs::read_to_string(&self.config.data).await?;
+        let file = read_to_string(&self.config.data)?;
         let result = serde_json::from_str(&file)?;
 
         Ok(result)
     }
 
-    async fn write_datafile(&self, datafile: &HashMap<String, Problem>) -> Result<()> {
+    fn write_datafile(&self, datafile: &HashMap<String, Problem>) -> Result<()> {
         let json = serde_json::to_string_pretty(&datafile)?;
         let mut file = OpenOptions::new()
             .create(true)
             .write(true)
             .append(false)
-            .open(&self.config.data)
-            .await?;
+            .open(&self.config.data)?;
 
-        file.write_all(&json.into_bytes()).await?;
+        file.write_all(&json.into_bytes())?;
 
         Ok(())
     }

@@ -16,8 +16,7 @@ use crate::{
 };
 use anyhow::Result;
 use dialoguer::{theme::ColorfulTheme, Select};
-use std::str::FromStr;
-use std::{convert::TryFrom, path::PathBuf};
+use std::{convert::TryFrom, path::PathBuf, str::FromStr};
 use structopt::{clap::AppSettings, StructOpt};
 
 #[derive(StructOpt, PartialEq, Debug)]
@@ -130,30 +129,27 @@ impl TryFrom<u64> for ForceProblemCreation {
     }
 }
 
-#[tokio::main]
-async fn main() -> Result<()> {
+fn main() -> Result<()> {
     let opt = Opt::from_args();
 
     match opt.cmd {
-        Cmd::Problem { id, force } => {
-            create_problem(&id, ForceProblemCreation::try_from(force)?).await?
-        }
+        Cmd::Problem { id, force } => create_problem(&id, ForceProblemCreation::try_from(force)?)?,
         Cmd::Test {
             problem_id,
             verbose,
         } => {
-            let kah = Kah::get().await?;
-            let problem = match kah.get_problem(&problem_id).await {
+            let kah = Kah::get()?;
+            let problem = match kah.get_problem(&problem_id) {
                 Some(x) => Ok(x),
                 None => Err(NoSuchProblem(problem_id)),
             }?;
             let mut test = Test::new(&kah, problem, verbose);
-            test.run().await?;
+            test.run()?;
         }
         Cmd::Submit { .. } => println!("You are submitting something!"),
         Cmd::Info { problem } => {
-            let kah = Kah::get().await?;
-            let problem = match kah.get_problem(&problem).await {
+            let kah = Kah::get()?;
+            let problem = match kah.get_problem(&problem) {
                 Some(problem) => problem,
                 None => return Err(NoSuchProblem(problem).into()),
             };
@@ -161,11 +157,11 @@ async fn main() -> Result<()> {
             println!("{}", problem);
         }
         Cmd::Init { file, force } => {
-            Kah::new(file, force).await?;
+            Kah::new(file, force)?;
         }
         Cmd::Update => {
-            let mut kah = Kah::get().await?;
-            kah.update().await?;
+            let mut kah = Kah::get()?;
+            kah.update()?;
 
             println!("Successfully updated data");
         }
@@ -174,7 +170,7 @@ async fn main() -> Result<()> {
     Ok(())
 }
 
-async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result<()> {
+fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result<()> {
     let languages = &["Rust", "Kotlin", "Java", "Python", "Haskell"];
     let language = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select a language to solve problem in")
@@ -182,10 +178,10 @@ async fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result
         .interact()?;
 
     let language = Languages::from_str(languages[language])?.get_language();
-    let problem = ProblemMetadata::new(problem_id).await?;
-    let mut kah = Kah::get().await?;
+    let problem = ProblemMetadata::new(problem_id)?;
+    let mut kah = Kah::get()?;
 
-    kah.create_problem(&problem, &language, force).await?;
+    kah.create_problem(&problem, &language, force)?;
 
     Ok(())
 }

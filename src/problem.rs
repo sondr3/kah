@@ -9,8 +9,8 @@ use select::{
     predicate::{Class, Name, Predicate},
 };
 use serde::{Deserialize, Serialize};
+use std::{fs::File, io::Write};
 use tempfile::tempdir;
-use tokio::{fs::File, io::AsyncWriteExt};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Sample {
@@ -38,22 +38,20 @@ pub struct ProblemMetadata {
 }
 
 impl ProblemMetadata {
-    pub(crate) async fn new(id: &str) -> Result<ProblemMetadata> {
-        let mut problem = ProblemMetadata::get(id).await?;
+    pub(crate) fn new(id: &str) -> Result<ProblemMetadata> {
+        let mut problem = ProblemMetadata::get(id)?;
 
         println!("Found problem {}, fetching data", problem.name);
-        problem.get_samples().await?;
+        problem.get_samples()?;
 
         Ok(problem)
     }
 
-    pub async fn get(id: &str) -> Result<ProblemMetadata> {
-        let url = Kah::get().await?.get_kattis_url();
+    pub fn get(id: &str) -> Result<ProblemMetadata> {
+        let url = Kah::get()?.get_kattis_url();
         let path: String = format!("{}/problems/{}", url, id);
-        let response = reqwest::get(&path).await?;
-
-        let body = match response.error_for_status() {
-            Ok(resp) => resp.text().await?,
+        let body = match ureq::get(&path).call() {
+            Ok(resp) => resp.into_string()?,
             Err(err) => return Err(FetchError(id.to_string(), err.to_string()).into()),
         };
 
@@ -102,19 +100,19 @@ impl ProblemMetadata {
         })
     }
 
-    async fn get_samples(&mut self) -> Result<()> {
+    fn get_samples(&mut self) -> Result<()> {
         let temp_dir = tempdir()?;
         let file_path = temp_dir.path().join("samples.zip");
 
-        let mut temp_file = File::create(&file_path).await?;
+        let mut temp_file = File::create(&file_path)?;
 
-        let url = Kah::get().await?.get_kattis_url();
+        let url = Kah::get()?.get_kattis_url();
 
         let path: String = self.sample_files_url(url);
-        let response = reqwest::get(&path).await?;
+        let response = ureq::get(&path).call()?;
 
-        temp_file.write_all(&response.bytes().await?).await?;
-        self.samples = unzip(&file_path).await?;
+        temp_file.write_all(&response.into_string()?.as_bytes())?;
+        self.samples = unzip(&file_path)?;
         temp_dir.close()?;
         Ok(())
     }

@@ -2,17 +2,14 @@ pub(crate) mod python;
 
 use crate::{languages::Languages, problem::ProblemMetadata, test::Test, test::TestResult};
 use anyhow::Result;
-use async_trait::async_trait;
+use std::io::Write;
 use std::path::PathBuf;
-use std::process::Stdio;
-use tokio::io::AsyncWriteExt;
-use tokio::process::Command;
-use tokio::time::Instant;
+use std::process::{Command, Stdio};
+use std::time::Instant;
 
-#[async_trait]
 pub(crate) trait Language {
-    async fn build(&self, test: &Test) -> Result<()>;
-    async fn run(&self, test: &Test) -> Result<TestResult>;
+    fn build(&self, test: &Test) -> Result<()>;
+    fn run(&self, test: &Test) -> Result<TestResult>;
     fn config(&self) -> &LanguageConfig;
     fn language_path(&self) -> String;
     fn problem_path(&self, problem: &ProblemMetadata) -> String;
@@ -27,7 +24,7 @@ pub struct LanguageConfig {
     pub(crate) run_command: String,
 }
 
-pub(crate) async fn run_problem(command: &str, file: &PathBuf, test: &Test) -> Result<TestResult> {
+pub(crate) fn run_problem(command: &str, file: &PathBuf, test: &Test) -> Result<TestResult> {
     let mut result = TestResult::new();
 
     for case in &test.problem.metadata.samples {
@@ -40,9 +37,9 @@ pub(crate) async fn run_problem(command: &str, file: &PathBuf, test: &Test) -> R
             .spawn()?;
 
         let stdin = command.stdin.as_mut().unwrap();
-        stdin.write_all(case.input.as_bytes()).await?;
+        stdin.write_all(case.input.as_bytes())?;
 
-        let output = command.wait_with_output().await?;
+        let output = command.wait_with_output()?;
         let after = Instant::now();
         let duration = after - before;
         result.timings.push(duration);

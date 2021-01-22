@@ -1,9 +1,8 @@
 use crate::utils::{average_duration, max_duration, min_duration};
 use crate::{datafile::Problem, kah::Kah, language::Language};
 use anyhow::Result;
-use std::path::PathBuf;
+use std::{path::PathBuf, time::Duration};
 use tempfile::tempdir;
-use tokio::time::Duration;
 
 #[derive(Debug)]
 pub(crate) struct Test {
@@ -69,29 +68,19 @@ impl Test {
         }
     }
 
-    pub(crate) async fn run(&mut self) -> Result<()> {
-        self.build_problem().await?;
-        let result = self.run_tests().await?;
+    pub(crate) fn run(&mut self) -> Result<()> {
+        self.build_problem()?;
+        let result = self.run_tests()?;
         result.report(self);
 
         Ok(())
     }
 
-    async fn build_problem(&self) -> Result<()> {
-        self.problem
-            .solution
-            .language
-            .get_language()
-            .build(&self)
-            .await
+    fn build_problem(&self) -> Result<()> {
+        self.problem.solution.language.get_language().build(&self)
     }
 
-    async fn run_tests(&self) -> Result<TestResult> {
-        self.problem
-            .solution
-            .language
-            .get_language()
-            .run(&self)
-            .await
+    fn run_tests(&self) -> Result<TestResult> {
+        self.problem.solution.language.get_language().run(&self)
     }
 }

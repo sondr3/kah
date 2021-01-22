@@ -15,10 +15,8 @@ travis-ci = { repository = "sondr3/kah" }
 
 [dependencies]
 anyhow = "1.0.38"
-async-trait = "0.1.42"
 dialoguer = "0.7.1"
 directories = "3.0.1"
-reqwest = { version = "0.11.0", features = ["json"] }
 rust-ini = "0.16.1"
 select = "0.5.0"
 serde = { version = "1.0.120", features = ["derive"] }
@@ -26,5 +24,5 @@ serde_json = "1.0.61"
 structopt = "0.3.21"
 tempfile = "3.2.0"
 thiserror = "1.0.23"
-tokio = { version = "1.0.2", features = ["full"] }
 zip = "0.5.9"
+ureq = "2.0.1"
