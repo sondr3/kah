@@ -16,9 +16,8 @@ use crate::{
 };
 use anyhow::Result;
 use dialoguer::{theme::ColorfulTheme, Select};
-use serde::export::TryFrom;
-use std::path::PathBuf;
 use std::str::FromStr;
+use std::{convert::TryFrom, path::PathBuf};
 use structopt::{clap::AppSettings, StructOpt};
 
 #[derive(StructOpt, PartialEq, Debug)]
