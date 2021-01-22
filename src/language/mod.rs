@@ -1,27 +1,22 @@
+pub(crate) mod cpp;
 pub(crate) mod python;
 
 use crate::{languages::Languages, problem::ProblemMetadata, test::Test, test::TestResult};
 use anyhow::Result;
-use std::io::Write;
-use std::path::PathBuf;
-use std::process::{Command, Stdio};
-use std::time::Instant;
+use std::{
+    io::Write,
+    path::PathBuf,
+    process::{Command, Stdio},
+    time::Instant,
+};
 
-pub(crate) trait Language {
-    fn build(&self, test: &Test) -> Result<()>;
-    fn run(&self, test: &Test) -> Result<TestResult>;
-    fn config(&self) -> &LanguageConfig;
-    fn language_path(&self) -> String;
-    fn problem_path(&self, problem: &ProblemMetadata) -> String;
-    fn initial_problem_content(&self) -> String;
-}
-
-#[derive(Debug)]
-pub struct LanguageConfig {
-    pub(crate) variant: Languages,
-    pub(crate) extension: String,
-    pub(crate) compile_command: Option<String>,
-    pub(crate) run_command: String,
+pub(crate) fn problem_path(lang: &Languages, problem: &ProblemMetadata) -> String {
+    format!(
+        "{}/{}.{}",
+        lang.language_path(),
+        problem.as_os_str(),
+        lang.extension()
+    )
 }
 
 pub(crate) fn run_problem(command: &str, file: &PathBuf, test: &Test) -> Result<TestResult> {

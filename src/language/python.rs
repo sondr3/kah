@@ -1,78 +1,16 @@
 use crate::{
-    language::{run_problem, Language, LanguageConfig},
-    languages::Languages,
-    problem::ProblemMetadata,
+    language::problem_path,
+    language::run_problem,
     test::{Test, TestResult},
 };
 use anyhow::Result;
-use std::{fmt, fmt::Formatter};
 
-#[derive(Debug)]
-pub(crate) struct Python {
-    pub(crate) config: LanguageConfig,
-}
+pub(crate) fn run_python(test: &Test) -> Result<TestResult> {
+    let root = &test.code_dir;
 
-impl fmt::Display for Python {
-    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
-        write!(f, "{}", self.config.variant.to_string())
-    }
-}
+    let language = &test.problem.solution.language;
+    let path = problem_path(language, &test.problem.metadata);
+    let file = root.join(path);
 
-impl Default for Python {
-    fn default() -> Self {
-        Python {
-            config: LanguageConfig {
-                variant: Languages::Python,
-                extension: "py".to_string(),
-                compile_command: None,
-                run_command: "python3".to_string(),
-            },
-        }
-    }
-}
-
-impl Python {
-    pub(crate) fn new() -> Self {
-        Default::default()
-    }
-}
-
-impl Language for Python {
-    fn build(&self, _: &Test) -> Result<()> {
-        Ok(())
-    }
-
-    fn run(&self, test: &Test) -> Result<TestResult> {
-        let root = &test.code_dir;
-        let file = root.join(
-            test.problem
-                .solution
-                .language
-                .get_language()
-                .problem_path(&test.problem.metadata),
-        );
-
-        run_problem(&self.config.run_command, &file, test)
-    }
-
-    fn config(&self) -> &LanguageConfig {
-        &self.config
-    }
-
-    fn language_path(&self) -> String {
-        self.config.variant.to_string().to_ascii_lowercase()
-    }
-
-    fn problem_path(&self, problem: &ProblemMetadata) -> String {
-        format!(
-            "{}/{}.{}",
-            self.config.variant.to_string().to_ascii_lowercase(),
-            problem.as_os_str(),
-            self.config.extension
-        )
-    }
-
-    fn initial_problem_content(&self) -> String {
-        self.config.variant.initial_problem_content()
-    }
+    run_problem("python3", &file, test)
 }

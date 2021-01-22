@@ -50,8 +50,10 @@ impl ProblemMetadata {
     pub fn get(id: &str) -> Result<ProblemMetadata> {
         let url = Kah::get()?.get_kattis_url();
         let path: String = format!("{}/problems/{}", url, id);
-        let body = match ureq::get(&path).call() {
-            Ok(resp) => resp.into_string()?,
+        let resp = reqwest::blocking::get(&path)?;
+
+        let body = match resp.error_for_status() {
+            Ok(resp) => resp.text()?,
             Err(err) => return Err(FetchError(id.to_string(), err.to_string()).into()),
         };
 
@@ -109,9 +111,9 @@ impl ProblemMetadata {
         let url = Kah::get()?.get_kattis_url();
 
         let path: String = self.sample_files_url(url);
-        let response = ureq::get(&path).call()?;
+        let response = reqwest::blocking::get(&path)?;
 
-        temp_file.write_all(&response.into_string()?.as_bytes())?;
+        temp_file.write_all(&response.bytes()?)?;
         self.samples = unzip(&file_path)?;
         temp_dir.close()?;
         Ok(())

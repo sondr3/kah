@@ -1,12 +1,13 @@
-use crate::{
-    kah::Kah, language::Language, languages::Languages, problem::ProblemMetadata,
-    ForceProblemCreation,
-};
+use crate::{kah::Kah, languages::Languages, problem::ProblemMetadata, ForceProblemCreation};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
-use std::fs::{read_to_string, File, OpenOptions};
-use std::io::Write;
-use std::{collections::HashMap, fmt::Formatter, process::exit};
+use std::{
+    collections::HashMap,
+    fmt::Formatter,
+    fs::{read_to_string, File, OpenOptions},
+    io::Write,
+    process::exit,
+};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub(crate) struct Solution {
@@ -66,10 +67,10 @@ impl Kah {
         Ok(())
     }
 
-    pub(crate) fn add_problem<T: Language>(
+    pub(crate) fn add_problem(
         &mut self,
         problem: &ProblemMetadata,
-        language: &T,
+        language: &Languages,
         force: ForceProblemCreation,
     ) -> Result<()> {
         let mut problems = self.open_datafile()?;
@@ -83,7 +84,7 @@ impl Kah {
             Problem {
                 metadata: problem.clone(),
                 solution: Solution {
-                    language: language.config().variant,
+                    language: language.clone(),
                     solved: false,
                 },
             },

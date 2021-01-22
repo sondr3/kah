@@ -177,11 +177,11 @@ fn create_problem(problem_id: &str, force: ForceProblemCreation) -> Result<()> {
         .items(&languages[..])
         .interact()?;
 
-    let language = Languages::from_str(languages[language])?.get_language();
+    let language = Languages::from_str(languages[language])?;
     let problem = ProblemMetadata::new(problem_id)?;
     let mut kah = Kah::get()?;
 
-    kah.create_problem(&problem, &language, force)?;
+    kah.create_problem(&problem, language, force)?;
 
     Ok(())
 }

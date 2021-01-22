@@ -1,14 +1,12 @@
-use crate::{
-    error::KahError::KattisrcParseError, language::Language, problem::ProblemMetadata,
-    ForceProblemCreation,
-};
+use crate::language::problem_path;
+use crate::languages::Languages;
+use crate::{error::KahError::KattisrcParseError, problem::ProblemMetadata, ForceProblemCreation};
 use anyhow::Result;
 use directories::ProjectDirs;
 use ini::Ini;
 use serde::{Deserialize, Serialize};
 use std::{
     env::current_dir,
-    fmt::Display,
     fs,
     fs::{read_to_string, File},
     io::Write,
@@ -80,14 +78,14 @@ impl Kah {
         self.kattis.hostname.to_string()
     }
 
-    pub(crate) fn create_problem<T: Language + Display>(
+    pub(crate) fn create_problem(
         &mut self,
         problem: &ProblemMetadata,
-        language: &T,
+        language: Languages,
         force: ForceProblemCreation,
     ) -> Result<()> {
         let code = language.initial_problem_content();
-        let path = language.problem_path(&problem);
+        let path = problem_path(&language, &problem);
 
         let language_folder = &language.language_path();
 
@@ -109,7 +107,7 @@ impl Kah {
 
         println!("Created {} in {}", problem.name, language.to_string());
 
-        self.add_problem(problem, language, force)?;
+        self.add_problem(problem, &language, force)?;
 
         Ok(())
     }

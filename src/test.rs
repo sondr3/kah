@@ -1,5 +1,5 @@
 use crate::utils::{average_duration, max_duration, min_duration};
-use crate::{datafile::Problem, kah::Kah, language::Language};
+use crate::{datafile::Problem, kah::Kah};
 use anyhow::Result;
 use std::{path::PathBuf, time::Duration};
 use tempfile::tempdir;
@@ -77,10 +77,10 @@ impl Test {
     }
 
     fn build_problem(&self) -> Result<()> {
-        self.problem.solution.language.get_language().build(&self)
+        self.problem.solution.language.build()
     }
 
     fn run_tests(&self) -> Result<TestResult> {
-        self.problem.solution.language.get_language().run(&self)
+        self.problem.solution.language.run(&self)
     }
 }
