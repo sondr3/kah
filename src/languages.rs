@@ -11,6 +11,7 @@ const JAVA_CODE: &str = include_str!("./data/Problem.java");
 const KOTLIN_CODE: &str = include_str!("./data/Problem.kt");
 const RUST_CODE: &str = include_str!("./data/Problem.rs");
 const HASKELL_CODE: &str = include_str!("./data/Problem.hs");
+const CPP_CODE: &str = include_str!("./data/Problem.cpp");
 
 #[derive(Debug, Copy, Clone, Deserialize, Serialize)]
 pub enum Languages {
@@ -19,6 +20,7 @@ pub enum Languages {
     Haskell,
     Rust,
     Kotlin,
+    CPP,
 }
 
 impl fmt::Display for Languages {
@@ -29,6 +31,7 @@ impl fmt::Display for Languages {
             Languages::Haskell { .. } => "Haskell",
             Languages::Rust { .. } => "Rust",
             Languages::Kotlin { .. } => "Kotlin",
+            Languages::CPP { .. } => "C++",
         }
         .to_string();
         write!(f, "{}", name)
@@ -45,6 +48,7 @@ impl FromStr for Languages {
             "haskell" => Ok(Languages::Haskell),
             "rust" => Ok(Languages::Rust),
             "kotlin" => Ok(Languages::Kotlin),
+            "cpp" | "c++" => Ok(Languages::Kotlin),
             _ => Err(KahError::LanguageParseError(s.to_string())),
         }
     }
@@ -58,6 +62,7 @@ impl Languages {
             Languages::Haskell => todo!(),
             Languages::Rust => todo!(),
             Languages::Kotlin => todo!(),
+            Languages::CPP => todo!(),
         }
     }
 
@@ -68,6 +73,7 @@ impl Languages {
             Languages::Haskell { .. } => HASKELL_CODE,
             Languages::Rust { .. } => RUST_CODE,
             Languages::Kotlin { .. } => KOTLIN_CODE,
+            Languages::CPP { .. } => CPP_CODE,
         }
         .to_string()
     }

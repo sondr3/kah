@@ -10,9 +10,6 @@ readme = "README.md"
 license = "GPL-3.0-or-later"
 edition = "2018"
 
-[badges]
-travis-ci = { repository = "sondr3/kah" }
-
 [dependencies]
 anyhow = "1.0.38"
 dialoguer = "0.7.1"
